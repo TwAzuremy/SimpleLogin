@@ -1,0 +1,6 @@
+${AnsiColor.BRIGHT_YELLOW}    ____ _               __     
+${AnsiColor.BRIGHT_YELLOW}   / __/(_)__ _   ___   / /__ __
+${AnsiColor.BRIGHT_YELLOW}  _\ \ / //  ' \ / _ \ / // // /
+${AnsiColor.BRIGHT_YELLOW} /___//_//_/_/_// .__//_/ \_, / 
+${AnsiColor.BRIGHT_YELLOW}               /_/       /___/  
+${AnsiColor.GREEN} :: Spring Boot ::${AnsiColor.DEFAULT}      (v${spring-boot.version})

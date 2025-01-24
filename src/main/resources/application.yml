@@ -1,0 +1,29 @@
+server:
+    port: 13900
+
+spring:
+    application:
+        name: simpleLogin
+    mvc:
+        static-path-pattern: /!(index)/**
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/simpleLogin?serverTimezone=GMT%2B8
+        username: root
+        password: 123456
+    banner:
+        location: classpath:static/banner.txt
+    jpa:
+        show-sql: false
+        generate-ddl: true
+        hibernate:
+            ddl-auto: update
+        open-in-view: false
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: azuremytw@gmail.com
+        password: aqkgdnaqvskcmrvo
+        properties:
+          mail.smtp.auth: true
+          mail.smtp.starttls.enable: true
