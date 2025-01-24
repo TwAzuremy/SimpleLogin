@@ -4,6 +4,8 @@ import com.framework.simpleLogin.mail.Email;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,6 +25,8 @@ public class EmailService {
 
     @Resource
     private TemplateEngine templateEngine;
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     @Value("${spring.mail.username}")
     private String sender;
@@ -47,7 +51,17 @@ public class EmailService {
         }
     };
 
-    public String sendMail(Email details, Boolean isHtml) {
+    private final BiConsumer<String, Object> mailLogger = (recipient, content) -> {
+        if (content instanceof Exception e) {
+            // Output when an email fails to be sent.
+            logger.error("Mail messages from {} to {} failed to be sent with the following error: \n{}", sender, recipient, e.getMessage());
+        } else {
+            // Output when an email is successfully sent.
+            logger.info("A mail message was successfully sent from {} to {}. The content is: \n{}", sender, recipient, content);
+        }
+    };
+
+    public Boolean sendMail(Email details, Boolean isHtml) {
         details.setIsHtml(isHtml);
 
         try {
@@ -57,13 +71,17 @@ public class EmailService {
 
             javaMailSender.send(mailMessage);
 
-            return "Mail Sent Successfully...";
+            mailLogger.accept(details.getRecipient(), details.getMsgBody());
+
+            return true;
         } catch (MessagingException e) {
-            return "Error while sending Mail...\n" + e.getMessage();
+            mailLogger.accept(details.getRecipient(), e);
+
+            return false;
         }
     }
 
-    public String sendTemplateMail(Email details, Map<String, Object> variables) {
+    public Boolean sendTemplateMail(Email details, Map<String, Object> variables) {
         try {
             MimeMessage mailMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);
@@ -77,9 +95,13 @@ public class EmailService {
 
             javaMailSender.send(mailMessage);
 
-            return "Mail Sent Successfully...";
+            mailLogger.accept(details.getRecipient(), details.getMsgBody());
+
+            return true;
         } catch (MessagingException e) {
-            return "Error while sending Mail...\n" + e.getMessage();
+            mailLogger.accept(details.getRecipient(), e);
+
+            return false;
         }
     }
 }

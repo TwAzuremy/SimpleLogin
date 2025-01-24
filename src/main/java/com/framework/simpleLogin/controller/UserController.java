@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")
@@ -18,15 +20,24 @@ public class UserController {
     private EmailService emailService;
 
     @PostMapping("/sendText")
-    public String sendText(@RequestBody Email details) {
+    public Boolean sendText(@RequestBody Email details) {
         return emailService.sendMail(details, true);
     }
 
     @PostMapping("/sendTemplate")
-    public String sendTemplate(@RequestBody Email details) {
+    public Boolean sendTemplate(@RequestBody Email details) {
         Map<String, Object> variables = new HashMap<>();
 
-        variables.put("code", 114514);
+        variables.put("username", details.getRecipient());
+        variables.put("content", "To confirm this email for your account, enter the following verification code in the app: ");
+
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random rand = new Random();
+
+        String code = rand.ints(6, 0, chars.length())
+                .mapToObj(i -> String.valueOf(chars.charAt(i)))
+                .collect(Collectors.joining());
+        variables.put("code", code);
 
         return emailService.sendTemplateMail(details, variables);
     }
