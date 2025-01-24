@@ -4,13 +4,10 @@ server:
 spring:
     application:
         name: simpleLogin
+    profiles:
+        active: dev
     mvc:
         static-path-pattern: /!(index)/**
-    datasource:
-        driver-class-name: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/simpleLogin?serverTimezone=GMT%2B8
-        username: <your mysql username>
-        password: <your mysql password>
     banner:
         location: classpath:static/banner.txt
     jpa:
@@ -20,10 +17,6 @@ spring:
             ddl-auto: update
         open-in-view: false
     mail:
-        host: smtp.gmail.com
-        port: 587
-        username: <your email address>
-        password: <smtp password>
         properties:
             mail.smtp.auth: true
             mail.smtp.starttls.enable: true

@@ -1,0 +1,11 @@
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/simpleLogin?serverTimezone=GMT%2B8
+        username: <your mysql username>
+        password: <your mysql password>
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: <your gmail address>
+        password: <smtp password>
