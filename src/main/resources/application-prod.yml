@@ -9,3 +9,6 @@ spring:
         port: 587
         username: <your gmail address>
         password: <smtp password>
+    data:
+        redis:
+            password: <your redis password>
