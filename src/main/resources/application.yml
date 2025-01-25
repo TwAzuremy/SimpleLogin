@@ -10,6 +10,9 @@ spring:
         static-path-pattern: /!(index)/**
     banner:
         location: classpath:static/banner.txt
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/simpleLogin?serverTimezone=GMT%2B8
     jpa:
         show-sql: false
         generate-ddl: true
@@ -31,3 +34,7 @@ spring:
                     min-idle: 0
                     max-active: 8
                     max-wait: -1
+    cache:
+        type: redis
+        redis:
+            time-to-live: 600s
