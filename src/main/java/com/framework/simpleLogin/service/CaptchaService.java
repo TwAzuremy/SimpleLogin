@@ -3,7 +3,6 @@ package com.framework.simpleLogin.service;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -13,13 +12,16 @@ import java.util.stream.IntStream;
 
 @Service
 public class CaptchaService {
-    @Resource(name = "stringRedisTemplate")
-    private StringRedisTemplate redisTemplate;
+    @Resource
+    private RedisService redisService;
+
+    private final String cacheName = "captcha";
 
     private final Logger logger = LoggerFactory.getLogger(CaptchaService.class);
 
     /**
      * Simple generation of captcha
+     *
      * @param length The length of the captcha
      * @return captcha
      */
@@ -37,22 +39,22 @@ public class CaptchaService {
     }
 
     public void store(String key, String captcha, long expirationTime, TimeUnit timeUnit) {
-        redisTemplate.opsForValue().set(key, captcha, expirationTime, timeUnit);
+        redisService.set(cacheName + ":" + key, captcha, expirationTime, timeUnit);
 
-        logger.info("Key '{}' stored verification code '{}' with an expiration date of {} {}.",
-                key, captcha, expirationTime, timeUnit.toString().toLowerCase());
+        logger.info("In the cache name '{}', key '{}' stores the verification code '{}' with an expiration date of {} {}.",
+                cacheName, key, captcha, expirationTime, timeUnit.toString().toLowerCase());
     }
 
     public Boolean verify(String key, String inputCaptcha) {
-        String redisCaptcha = redisTemplate.opsForValue().get(key);
+        String redisCaptcha = (String) redisService.get(cacheName + ":" + key);
 
         if (redisCaptcha != null) {
             boolean result = redisCaptcha.equals(inputCaptcha.toUpperCase());
 
             // Remove the captcha after verification
             if (result) {
-                logger.info("{} Verified passed.", key);
-                redisTemplate.delete(key);
+                logger.info("In the cache name '{}', '{}' Verified passed.", cacheName, key);
+                redisService.delete(cacheName, key);
             }
 
             return result;

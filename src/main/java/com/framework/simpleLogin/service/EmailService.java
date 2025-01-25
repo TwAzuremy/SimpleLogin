@@ -60,7 +60,7 @@ public class EmailService {
             logger.error("Message sent to {} failed, error message: \n{}", recipient, e.getMessage());
         } else {
             // Output when an email is successfully sent.
-            logger.info("The message was successfully sent to {}. The content is: \n{}", recipient, content);
+            logger.info("The message was successfully sent to {}. The content is: \n\t{}", recipient, content);
         }
     };
 
