@@ -17,14 +17,10 @@ public class User {
     @Column(name = "username", length = 64, nullable = false)
     private String username;
 
-    // TODO:
-    //      (`password` + `slat`) use SHA-512: Stitch the password with the salt first, and then use SHA-512 encryption ( length = 64 ).
-    //      `slat` use SecureRandom: After generating 32 bytes, switch to Base64 encoding ( length = 44 ).
-    //      finally: string + slat ( Base64 ) ( length = 108 ).
-    @Column(name = "password", length = 108, nullable = false)
+    @Column(name = "password", length = 96, nullable = false)
     private String password;
 
     @Column(name = "email", nullable = false)
-    @Pattern(regexp = "^\\S+@\\S+\\.\\S+$", message = "Invalid email address")
+    @Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address")
     private String email;
 }
