@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 @Service
@@ -38,6 +40,7 @@ public class EmailService {
             helper.setText(details.getMsgBody(), details.getIsHtml());
             helper.setSubject(details.getSubject());
 
+            // If there is an attachment, then send it.
             if (details.getAttachment() != null) {
                 File file = new File(details.getAttachment());
 
@@ -54,14 +57,15 @@ public class EmailService {
     private final BiConsumer<String, Object> mailLogger = (recipient, content) -> {
         if (content instanceof Exception e) {
             // Output when an email fails to be sent.
-            logger.error("Mail messages from {} to {} failed to be sent with the following error: \n{}", sender, recipient, e.getMessage());
+            logger.error("Message sent to {} failed, error message: \n{}", recipient, e.getMessage());
         } else {
             // Output when an email is successfully sent.
-            logger.info("A mail message was successfully sent from {} to {}. The content is: \n{}", sender, recipient, content);
+            logger.info("The message was successfully sent to {}. The content is: \n{}", recipient, content);
         }
     };
 
-    public Boolean sendMail(Email details, Boolean isHtml) {
+    @Async
+    public CompletableFuture<Boolean> sendMail(Email details, Boolean isHtml) {
         details.setIsHtml(isHtml);
 
         try {
@@ -70,38 +74,39 @@ public class EmailService {
             setEmailDetails.accept(messageHelper, details);
 
             javaMailSender.send(mailMessage);
-
             mailLogger.accept(details.getRecipient(), details.getMsgBody());
 
-            return true;
+            return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
             mailLogger.accept(details.getRecipient(), e);
 
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
     }
 
-    public Boolean sendTemplateMail(Email details, Map<String, Object> variables) {
+    @Async
+    public CompletableFuture<Boolean> sendTemplateMail(Email details, String HTMLTemplate, Map<String, Object> variables, String logDescription) {
         try {
             MimeMessage mailMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);
 
+            // Generate an HTML template
             Context context = new Context();
             context.setVariables(variables);
-            String template = templateEngine.process("mail/CaptchaHTML.html", context);
+            String template = templateEngine.process(HTMLTemplate, context);
 
+            // Save the HTML template to the msgBody.
             details.setMsgBody(template, true);
             setEmailDetails.accept(messageHelper, details);
 
             javaMailSender.send(mailMessage);
+            mailLogger.accept(details.getRecipient(), logDescription);
 
-            mailLogger.accept(details.getRecipient(), details.getMsgBody());
-
-            return true;
+            return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
             mailLogger.accept(details.getRecipient(), e);
 
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
     }
 }
