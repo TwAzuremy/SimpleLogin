@@ -38,3 +38,4 @@ spring:
         type: redis
         redis:
             time-to-live: 600s
+            cache-null-values: true
