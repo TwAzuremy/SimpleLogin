@@ -24,15 +24,17 @@ public class CaptchaController {
 
     private final Logger logger = LoggerFactory.getLogger(CaptchaController.class);
 
-    private final String additionalChars = "-captcha";
-
     @GetMapping("/send")
     public Boolean send(String recipient) {
-        long timeout = 10;
-        String captcha = captchaService.generator(6);
+        String captcha = captchaService.isExists(recipient);
 
-        // Store the captcha in Redis
-        captchaService.store(recipient + additionalChars, captcha, timeout, TimeUnit.MINUTES);
+        if (captcha == null) {
+            captcha = captchaService.generator(6);
+
+            // Store the captcha in Redis
+            long timeout = 10;
+            captchaService.store(recipient, captcha, timeout, TimeUnit.MINUTES);
+        }
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("username", recipient);
@@ -57,6 +59,6 @@ public class CaptchaController {
 
     @PostMapping("/verify")
     public Boolean verify(@RequestParam String recipient, @RequestParam String captcha) {
-        return captchaService.verify(recipient + additionalChars, captcha);
+        return captchaService.verify(recipient, captcha);
     }
 }

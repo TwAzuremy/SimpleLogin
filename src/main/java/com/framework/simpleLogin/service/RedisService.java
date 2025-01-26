@@ -1,8 +1,10 @@
 package com.framework.simpleLogin.service;
 
+import com.framework.simpleLogin.utils.CACHENAME;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +25,8 @@ public class RedisService {
         return redisTemplate.opsForValue().get(key);
     }
 
-    public void delete(String type, String key) {
-        redisTemplate.delete((type == null ? "" : type + ":") + key);
-
-        logger.info("In the cache name '{}', key '{}' is cleared.", type == null ? "default" : type, key);
+    @CacheEvict(cacheNames = CACHENAME.CAPTCHA, key = "#key")
+    public void deleteCaptcha(String key) {
+        logger.info("In the cache name '{}', key '{}' is cleared.", CACHENAME.CAPTCHA, key);
     }
 }
