@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.config;
 
+import com.framework.simpleLogin.utils.CACHENAME;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
@@ -45,13 +46,14 @@ public class RedisCacheConfig {
     @Bean
     public CacheManager cacheManager(RedisTemplate<String, Object> template) {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
+                .computePrefixWith(cacheName -> cacheName + ":")
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
 
         return RedisCacheManager.builder(template.getConnectionFactory())
                 .cacheDefaults(configuration)
-                .withCacheConfiguration("captcha", configuration)
-                .withCacheConfiguration("user", configuration)
+                .withCacheConfiguration(CACHENAME.CAPTCHA, configuration)
+                .withCacheConfiguration(CACHENAME.USER, configuration)
                 .build();
     }
 }

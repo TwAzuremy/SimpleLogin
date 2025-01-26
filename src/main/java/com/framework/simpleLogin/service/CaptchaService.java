@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.service;
 
+import com.framework.simpleLogin.utils.CACHENAME;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,6 @@ import java.util.stream.IntStream;
 public class CaptchaService {
     @Resource
     private RedisService redisService;
-
-    private final String cacheName = "captcha";
 
     private final Logger logger = LoggerFactory.getLogger(CaptchaService.class);
 
@@ -39,22 +38,22 @@ public class CaptchaService {
     }
 
     public void store(String key, String captcha, long expirationTime, TimeUnit timeUnit) {
-        redisService.set(cacheName + ":" + key, captcha, expirationTime, timeUnit);
+        redisService.set(CACHENAME.CAPTCHA + ":" + key, captcha, expirationTime, timeUnit);
 
         logger.info("In the cache name '{}', key '{}' stores the verification code '{}' with an expiration date of {} {}.",
-                cacheName, key, captcha, expirationTime, timeUnit.toString().toLowerCase());
+                CACHENAME.CAPTCHA, key, captcha, expirationTime, timeUnit.toString().toLowerCase());
     }
 
     public Boolean verify(String key, String inputCaptcha) {
-        String redisCaptcha = (String) redisService.get(cacheName + ":" + key);
+        String redisCaptcha = (String) redisService.get(CACHENAME.CAPTCHA + ":" + key);
 
         if (redisCaptcha != null) {
             boolean result = redisCaptcha.equals(inputCaptcha.toUpperCase());
 
             // Remove the captcha after verification
             if (result) {
-                logger.info("In the cache name '{}', '{}' Verified passed.", cacheName, key);
-                redisService.delete(cacheName, key);
+                logger.info("In the cache name '{}', '{}' Verified passed.", CACHENAME.CAPTCHA, key);
+                redisService.deleteCaptcha(key);
             }
 
             return result;
@@ -63,5 +62,9 @@ public class CaptchaService {
         logger.info("The captcha of '{}' is invalid.", key);
 
         return false;
+    }
+
+    public String isExists(String key) {
+        return (String) redisService.get(CACHENAME.CAPTCHA + ":" + key);
     }
 }
