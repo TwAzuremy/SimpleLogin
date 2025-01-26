@@ -3,11 +3,11 @@ package com.framework.simpleLogin.controller;
 import com.framework.simpleLogin.dto.UserDTO;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.service.UserService;
+import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -17,23 +17,11 @@ public class UserController {
 
     @PostMapping("/register")
     public UserDTO register(@RequestBody User user) {
-        User dbUser = userService.register(user);
-
-        if (dbUser != null) {
-            return new UserDTO(dbUser);
-        }
-
-        return null;
+        return new UserDTO(userService.register(user));
     }
 
     @PostMapping("/login")
-    public UserDTO login(@RequestBody User user) {
-        User dbUser = userService.login(user);
-
-        if (dbUser != null) {
-            return new UserDTO(dbUser);
-        }
-
-        return null;
+    public Object login(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        return SimpleUtils.stringIsEmpty(token) ? userService.login(user) : new UserDTO(userService.getUserFromToken(token.substring(7)));
     }
 }
