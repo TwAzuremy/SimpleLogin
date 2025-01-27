@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 public class UserDTO {
@@ -16,5 +18,11 @@ public class UserDTO {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
+    }
+
+    public UserDTO(Map<String, Object> claims) {
+        this.id = (int) claims.get("id");
+        this.username = (String) claims.get("username");
+        this.email = (String) claims.get("email");
     }
 }
