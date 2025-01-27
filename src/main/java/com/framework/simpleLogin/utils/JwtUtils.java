@@ -1,13 +1,14 @@
 package com.framework.simpleLogin.utils;
 
 import com.framework.simpleLogin.dto.UserDTO;
+import com.framework.simpleLogin.exception.InvalidJwtException;
+import com.framework.simpleLogin.service.RedisService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -15,13 +16,15 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtUtils {
     private static final String SECRETKEY = Encryption.SHA256("Azuremy");
     private static final long EXPIRATION = 1000 * 60 * 60 * 24 * 7;
 
-    private final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
+    @Resource
+    private RedisService redisService;
 
     public JwtUtils() {
     }
@@ -38,7 +41,10 @@ public class JwtUtils {
         claims.put("username", dto.getUsername());
         claims.put("email", dto.getEmail());
 
-        return generateToken(claims);
+        String token = generateToken(claims);
+        redisService.set(CACHE_NAME.USER + ":token:" + dto.getEmail(), token, EXPIRATION, TimeUnit.MILLISECONDS);
+
+        return token;
     }
 
     public String generateToken(Map<String, Object> claims) {
@@ -70,16 +76,10 @@ public class JwtUtils {
                     .parse(token);
 
             return true;
-        } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
+        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
+            throw new InvalidJwtException("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            logger.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
+            return false;
         }
-
-        return false;
     }
 }
