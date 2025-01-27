@@ -1,9 +1,7 @@
 package com.framework.simpleLogin.service;
 
-import com.framework.simpleLogin.utils.CACHENAME;
+import com.framework.simpleLogin.utils.CACHE_NAME;
 import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -15,8 +13,6 @@ public class RedisService {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
-    private final Logger logger = LoggerFactory.getLogger(RedisService.class);
-
     public void set(String key, Object value, long expirationTime, TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(key, value, expirationTime, timeUnit);
     }
@@ -25,8 +21,15 @@ public class RedisService {
         return redisTemplate.opsForValue().get(key);
     }
 
-    @CacheEvict(cacheNames = CACHENAME.CAPTCHA, key = "#key")
+    public void increment(String key, int step) {
+        redisTemplate.opsForValue().increment(key, step);
+    }
+
+    public void delete(String key) {
+        redisTemplate.delete(key);
+    }
+
+    @CacheEvict(cacheNames = CACHE_NAME.CAPTCHA, key = "#key")
     public void deleteCaptcha(String key) {
-        logger.info("In the cache name '{}', key '{}' is cleared.", CACHENAME.CAPTCHA, key);
     }
 }

@@ -1,8 +1,7 @@
 package com.framework.simpleLogin.config;
 
-import com.framework.simpleLogin.utils.CACHENAME;
+import com.framework.simpleLogin.utils.CACHE_NAME;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -52,8 +51,8 @@ public class RedisCacheConfig {
 
         return RedisCacheManager.builder(template.getConnectionFactory())
                 .cacheDefaults(configuration)
-                .withCacheConfiguration(CACHENAME.CAPTCHA, configuration)
-                .withCacheConfiguration(CACHENAME.USER, configuration)
+                .withCacheConfiguration(CACHE_NAME.CAPTCHA, configuration)
+                .withCacheConfiguration(CACHE_NAME.USER, configuration)
                 .build();
     }
 }

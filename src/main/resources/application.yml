@@ -1,5 +1,8 @@
 server:
     port: 13900
+    error:
+        whitelabel:
+            enabled: false
 
 spring:
     application:
@@ -19,6 +22,8 @@ spring:
         hibernate:
             ddl-auto: update
         open-in-view: false
+    thymeleaf:
+        enabled: false
     mail:
         properties:
             mail.smtp.auth: true

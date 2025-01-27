@@ -5,45 +5,38 @@ import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.Encryption;
 import com.framework.simpleLogin.utils.JwtUtils;
+import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class UserService {
     @Resource
     private UserRepository userRepository;
 
     @Resource
+    private LoginAttemptService loginAttemptService;
+
+    @Resource
     private JwtUtils jwtUtils;
 
-    private final Logger logger = LoggerFactory.getLogger(UserService.class);
-
     public User register(User user) {
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            logger.info("User with email '{}' already exists.", user.getEmail());
-
+        if (userRepository.existsUserByEmail(user.getEmail())) {
             return null;
         }
 
         String salt = Encryption.generateSalt();
         String ciphertext = Encryption.SHA256(user.getPassword() + salt);
 
-        // TODO: This line of code is for testing purposes only.
-        //       The production environment needs to be removed.
-        //       Avoid leaking user information.
-        logger.info("User '{}' Plaintext Password: {}, Salt: {}, Ciphertext Password: {}.", user.getEmail(), user.getPassword(), salt, ciphertext);
-
         user.setPassword(ciphertext + salt);
         User dbUser = userRepository.save(user);
 
         if (userRepository.count() > 0) {
-            logger.info("User '{}' registered successfully.", user.getEmail());
-
             return dbUser;
         }
 
@@ -63,15 +56,8 @@ public class UserService {
             // Re-encrypt the password and salt together.
             String ciphertext = Encryption.SHA256(user.getPassword() + dbSalt);
 
-            // TODO: This line of code is for testing purposes only.
-            //       The production environment needs to be removed.
-            //       Avoid leaking user information.
-            logger.info("User '{}' login password: {}, ciphertext: {}.", user.getEmail(), user.getPassword(), ciphertext);
-
             // Compare the two ciphertexts.
             if (ciphertext.equals(dbCiphertext)) {
-                logger.info("User '{}' logged in successfully.", user.getEmail());
-
                 result.put("user", new UserDTO(dbUser));
                 result.put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
 
@@ -79,25 +65,12 @@ public class UserService {
             }
         }
 
-        logger.info("User '{}' does not exist or the password is wrong.", user.getEmail());
+        loginAttemptService.failed(user.getEmail());
 
         return null;
     }
 
-    public User getUserFromToken(String token) {
-        Map<String, Object> claims = jwtUtils.getClaims(token);
-
-        if (claims != null && !claims.isEmpty()) {
-            User user = new User();
-            user.setId((Integer) claims.get("id"));
-            user.setUsername((String) claims.get("username"));
-            user.setEmail((String) claims.get("email"));
-
-            if (userRepository.findByEmail(user.getEmail()) != null) {
-                return user;
-            }
-        }
-
-        return null;
+    public Map<String, Object> verifyByToken(String token) {
+        return jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
     }
 }

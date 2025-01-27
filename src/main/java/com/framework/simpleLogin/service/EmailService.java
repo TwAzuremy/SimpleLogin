@@ -28,8 +28,6 @@ public class EmailService {
     @Resource
     private TemplateEngine templateEngine;
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
-
     @Value("${spring.mail.username}")
     private String sender;
 
@@ -54,16 +52,6 @@ public class EmailService {
         }
     };
 
-    private final BiConsumer<String, Object> mailLogger = (recipient, content) -> {
-        if (content instanceof Exception e) {
-            // Output when an email fails to be sent.
-            logger.error("Message sent to {} failed, error message: \n{}", recipient, e.getMessage());
-        } else {
-            // Output when an email is successfully sent.
-            logger.info("The message was successfully sent to {}. The content is: \n\t{}", recipient, content);
-        }
-    };
-
     @Async
     public CompletableFuture<Boolean> sendMail(Email details, Boolean isHtml) {
         details.setIsHtml(isHtml);
@@ -74,12 +62,9 @@ public class EmailService {
             setEmailDetails.accept(messageHelper, details);
 
             javaMailSender.send(mailMessage);
-            mailLogger.accept(details.getRecipient(), details.getMsgBody());
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            mailLogger.accept(details.getRecipient(), e);
-
             return CompletableFuture.completedFuture(false);
         }
     }
@@ -100,12 +85,9 @@ public class EmailService {
             setEmailDetails.accept(messageHelper, details);
 
             javaMailSender.send(mailMessage);
-            mailLogger.accept(details.getRecipient(), logDescription);
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            mailLogger.accept(details.getRecipient(), e);
-
             return CompletableFuture.completedFuture(false);
         }
     }
