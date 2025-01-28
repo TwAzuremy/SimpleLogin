@@ -9,13 +9,17 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
 @Order(1)
-@WebFilter(urlPatterns = {"/user/login", "/user/verify"})
+@WebFilter(urlPatterns = {"/users/*"})
 public class UserFilter implements Filter {
+    private static final Set<String> ALLOWED_PATHS = Set.of("users/register");
     private final JwtUtils jwtUtils = new JwtUtils();
 
     @Resource
@@ -28,7 +32,15 @@ public class UserFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        String token = ((HttpServletRequest) servletRequest).getHeader("Authorization");
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        String path = request.getRequestURI().substring(request.getContextPath().length()).replaceAll("/+$", "");
+
+        if (ALLOWED_PATHS.contains(path)) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        String token = request.getHeader("Authorization");
 
         if (SimpleUtils.stringIsEmpty(token) || !token.startsWith(SimpleUtils.authorizationPrefix)) {
             filterChain.doFilter(servletRequest, servletResponse);
@@ -39,9 +51,9 @@ public class UserFilter implements Filter {
             token = token.substring(SimpleUtils.authorizationPrefix.length());
 
             String email = jwtUtils.getClaims(token).get("email").toString();
-            String isExists = (String) redisService.get(CACHE_NAME.USER + ":token:" + email);
+            String cacheToken = (String) redisService.get(CACHE_NAME.USER + ":token:" + email);
 
-            if (SimpleUtils.stringIsEmpty(isExists) || !jwtUtils.validateToken(token) || !isExists.equals(token)) {
+            if (SimpleUtils.stringIsEmpty(cacheToken) || !jwtUtils.validateToken(token) || !cacheToken.equals(token)) {
                 throw new InvalidJwtException("The JWT token is invalid.");
             }
         } catch (RuntimeException e) {

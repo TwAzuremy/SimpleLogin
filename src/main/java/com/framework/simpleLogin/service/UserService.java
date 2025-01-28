@@ -2,6 +2,8 @@ package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.dto.UserDTO;
 import com.framework.simpleLogin.entity.User;
+import com.framework.simpleLogin.exception.NullUserException;
+import com.framework.simpleLogin.exception.SamePasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CACHE_NAME;
 import com.framework.simpleLogin.utils.Encryption;
@@ -38,11 +40,7 @@ public class UserService {
             user.setUsername(user.getEmail());
         }
 
-        String salt = Encryption.generateSalt();
-        String ciphertext = Encryption.SHA256(user.getPassword() + salt);
-
-        user.setPassword(ciphertext + salt);
-        userRepository.save(user);
+        userRepository.save(user.encryption(null));
 
         redisService.delete(CACHE_NAME.USER + ":cache:" + user.getEmail());
 
@@ -52,23 +50,18 @@ public class UserService {
     public Map<String, Object> login(User user) {
         User dbUser = userRepository.findByEmail(user.getEmail());
 
-        if (dbUser != null) {
-            // Take out the stored ciphertext and salt.
-            String dbCiphertext = dbUser.getPassword().substring(0, 64);
-            String dbSalt = dbUser.getPassword().substring(64, 96);
+        if (dbUser == null) {
+            throw new NullUserException("The user does not exist.");
+        }
 
-            // Re-encrypt the password and salt together.
-            String ciphertext = Encryption.SHA256(user.getPassword() + dbSalt);
-
-            // Compare the two ciphertexts.
-            if (ciphertext.equals(dbCiphertext)) {
-                return new HashMap<>() {
-                    {
-                        put("user", new UserDTO(dbUser));
-                        put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
-                    }
-                };
-            }
+        // Compare the two ciphertexts.
+        if (dbUser.equalsPassword(user.getPassword())) {
+            return new HashMap<>() {
+                {
+                    put("user", new UserDTO(dbUser));
+                    put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
+                }
+            };
         }
 
         loginAttemptService.failed(user.getEmail());
@@ -78,5 +71,22 @@ public class UserService {
 
     public Map<String, Object> verifyByToken(String token) {
         return jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
+    }
+
+    public void resetPassword(User user) {
+        User dbUser = userRepository.findByEmail(user.getEmail());
+
+        if (dbUser == null) {
+            throw new NullUserException("The user does not exist.");
+        }
+
+        if (!dbUser.equalsPassword(user.getPassword())) {
+            user.encryption(null);
+
+            userRepository.updatePassword(user.getEmail(), user.getPassword());
+            redisService.deleteUserToken(user.getEmail());
+        }
+
+        throw new SamePasswordException("The two passwords are the same.");
     }
 }
