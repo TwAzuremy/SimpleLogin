@@ -1,6 +1,5 @@
 package com.framework.simpleLogin.utils;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.framework.simpleLogin.serializer.HttpStatusSerializer;
 import lombok.AllArgsConstructor;

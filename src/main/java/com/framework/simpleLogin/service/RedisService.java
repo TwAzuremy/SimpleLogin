@@ -32,4 +32,8 @@ public class RedisService {
     @CacheEvict(cacheNames = CACHE_NAME.CAPTCHA, key = "#key")
     public void deleteCaptcha(String key) {
     }
+
+    @CacheEvict(cacheNames = CACHE_NAME.USER + ":token", key = "#key")
+    public void deleteUserToken(String key) {
+    }
 }

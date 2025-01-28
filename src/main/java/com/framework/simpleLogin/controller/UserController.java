@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 public class UserController {
     @Resource
     private UserService userService;
@@ -40,8 +40,38 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK, result);
     }
 
-    @PostMapping("/verify")
+    @GetMapping("/verify-token")
     public ResponseEntity<UserDTO> verify(@RequestHeader(value = "Authorization", required = false) String token) {
         return new ResponseEntity<>(HttpStatus.OK, new UserDTO(userService.verifyByToken(token)));
+    }
+
+    @PatchMapping("/reset-password")
+    public ResponseEntity<Object> resetPassword(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> result = userService.verifyByToken(token);
+        User tokenUser = new User() {
+            {
+                setId((int) result.get("id"));
+                setUsername((String) result.get("username"));
+                setEmail((String) result.get("email"));
+            }
+        };
+
+        if (!tokenUser.equals(user)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "User information does not match.", null);
+        }
+
+        userService.resetPassword(user);
+
+        return new ResponseEntity<>(HttpStatus.OK, null);
+    }
+
+    @PatchMapping("/reset-email")
+    public ResponseEntity<Object> resetEmail(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        return new ResponseEntity<>(HttpStatus.OK, null);
+    }
+
+    @PatchMapping("/reset-other-settings")
+    public ResponseEntity<Object> resetOtherSettings(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        return new ResponseEntity<>(HttpStatus.OK, null);
     }
 }
