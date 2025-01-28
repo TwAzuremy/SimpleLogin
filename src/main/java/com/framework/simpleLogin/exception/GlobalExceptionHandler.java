@@ -33,6 +33,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, "Mail send failed.", null);
     }
 
+    @ExceptionHandler(NullUserException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<Object> handleNullUserException(NullUserException e) {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND, "The user does not exist.", null);
+    }
+
+    @ExceptionHandler(SamePasswordException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Object> handleSamePasswordException(SamePasswordException e) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "The two passwords are the same.", null);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Object> handleException(Exception e) {
