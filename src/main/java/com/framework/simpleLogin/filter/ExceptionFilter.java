@@ -3,9 +3,7 @@ package com.framework.simpleLogin.filter;
 import com.framework.simpleLogin.exception.InvalidJwtException;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 

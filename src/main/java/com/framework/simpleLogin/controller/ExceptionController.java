@@ -3,7 +3,6 @@ package com.framework.simpleLogin.controller;
 import com.framework.simpleLogin.exception.InvalidJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller

@@ -4,8 +4,6 @@ import com.framework.simpleLogin.mail.Email;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -70,7 +68,7 @@ public class EmailService {
     }
 
     @Async
-    public CompletableFuture<Boolean> sendTemplateMail(Email details, String HTMLTemplate, Map<String, Object> variables, String logDescription) {
+    public CompletableFuture<Boolean> sendTemplateMail(Email details, String HTMLTemplate, Map<String, Object> variables) {
         try {
             MimeMessage mailMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);

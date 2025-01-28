@@ -1,7 +1,7 @@
 package com.framework.simpleLogin.aspect;
 
 import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.exception.NullEmailException;
+import com.framework.simpleLogin.exception.EmptyUserInfoException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,8 +16,8 @@ public class UserAspect {
         Object[] args = pjp.getArgs();
 
         if (args != null && args.length > 0 && args[0] instanceof User user) {
-            if (user.getEmail() == null || user.getEmail().isEmpty()) {
-                throw new NullEmailException("Email cannot be null or empty.");
+            if (user.isEmpty()) {
+                throw new EmptyUserInfoException("User information cannot be empty.");
             }
         }
 

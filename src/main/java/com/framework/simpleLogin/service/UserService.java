@@ -3,6 +3,7 @@ package com.framework.simpleLogin.service;
 import com.framework.simpleLogin.dto.UserDTO;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.repository.UserRepository;
+import com.framework.simpleLogin.utils.CACHE_NAME;
 import com.framework.simpleLogin.utils.Encryption;
 import com.framework.simpleLogin.utils.JwtUtils;
 import com.framework.simpleLogin.utils.SimpleUtils;
@@ -20,32 +21,35 @@ public class UserService {
     private UserRepository userRepository;
 
     @Resource
+    private RedisService redisService;
+
+    @Resource
     private LoginAttemptService loginAttemptService;
 
     @Resource
     private JwtUtils jwtUtils;
 
-    public User register(User user) {
+    public boolean register(User user) {
         if (userRepository.existsUserByEmail(user.getEmail())) {
-            return null;
+            return false;
+        }
+
+        if (SimpleUtils.stringIsEmpty(user.getUsername())) {
+            user.setUsername(user.getEmail());
         }
 
         String salt = Encryption.generateSalt();
         String ciphertext = Encryption.SHA256(user.getPassword() + salt);
 
         user.setPassword(ciphertext + salt);
-        User dbUser = userRepository.save(user);
+        userRepository.save(user);
 
-        if (userRepository.count() > 0) {
-            return dbUser;
-        }
+        redisService.delete(CACHE_NAME.USER + ":cache:" + user.getEmail());
 
-        return null;
+        return true;
     }
 
     public Map<String, Object> login(User user) {
-        Map<String, Object> result = new HashMap<>();
-
         User dbUser = userRepository.findByEmail(user.getEmail());
 
         if (dbUser != null) {
@@ -58,10 +62,12 @@ public class UserService {
 
             // Compare the two ciphertexts.
             if (ciphertext.equals(dbCiphertext)) {
-                result.put("user", new UserDTO(dbUser));
-                result.put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
-
-                return result;
+                return new HashMap<>() {
+                    {
+                        put("user", new UserDTO(dbUser));
+                        put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
+                    }
+                };
             }
         }
 

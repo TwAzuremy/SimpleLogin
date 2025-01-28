@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtUtils {
-    private static final String SECRETKEY = Encryption.SHA256("Azuremy");
+    private static final String SECRET_KEY = Encryption.SHA256("Azuremy");
     private static final long EXPIRATION = 1000 * 60 * 60 * 24 * 7;
 
     @Resource
@@ -30,7 +30,7 @@ public class JwtUtils {
     }
 
     private Key getSecretKey() {
-        byte[] keyBytes = SECRETKEY.getBytes();
+        byte[] keyBytes = SECRET_KEY.getBytes();
 
         return Keys.hmacShaKeyFor(keyBytes);
     }

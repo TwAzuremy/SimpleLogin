@@ -35,13 +35,13 @@ public class UserFilter implements Filter {
             return;
         }
 
-        token = token.substring(SimpleUtils.authorizationPrefix.length());
-
         try {
+            token = token.substring(SimpleUtils.authorizationPrefix.length());
+
             String email = jwtUtils.getClaims(token).get("email").toString();
             String isExists = (String) redisService.get(CACHE_NAME.USER + ":token:" + email);
 
-            if (SimpleUtils.stringIsEmpty(isExists) || !jwtUtils.validateToken(token)) {
+            if (SimpleUtils.stringIsEmpty(isExists) || !jwtUtils.validateToken(token) || !isExists.equals(token)) {
                 throw new InvalidJwtException("The JWT token is invalid.");
             }
         } catch (RuntimeException e) {

@@ -5,7 +5,6 @@ import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.service.LoginAttemptService;
 import com.framework.simpleLogin.service.UserService;
 import com.framework.simpleLogin.utils.ResponseEntity;
-import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,10 +21,8 @@ public class UserController {
     private LoginAttemptService loginAttemptService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@RequestBody User user) {
-        UserDTO dto = new UserDTO(userService.register(user));
-
-        return new ResponseEntity<>(HttpStatus.OK, dto);
+    public ResponseEntity<Boolean> register(@RequestBody User user) {
+        return new ResponseEntity<>(HttpStatus.OK, userService.register(user));
     }
 
     @PostMapping("/login")

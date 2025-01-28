@@ -3,8 +3,10 @@ package com.framework.simpleLogin.controller;
 import com.framework.simpleLogin.mail.Email;
 import com.framework.simpleLogin.service.CaptchaService;
 import com.framework.simpleLogin.service.EmailService;
+import com.framework.simpleLogin.utils.ResponseEntity;
 import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.annotation.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -21,7 +23,7 @@ public class CaptchaController {
     private CaptchaService captchaService;
 
     @GetMapping("/send")
-    public Boolean send(String recipient) {
+    public ResponseEntity<Boolean> send(String recipient) {
         String captcha = captchaService.isExists(recipient);
 
         if (SimpleUtils.stringIsEmpty(captcha)) {
@@ -41,17 +43,18 @@ public class CaptchaController {
         details.setSubject("Confirm captcha");
 
         try {
-            return emailService.sendTemplateMail(details,
+            boolean isSent = emailService.sendTemplateMail(details,
                     "mail/CaptchaHTML.html",
-                    variables,
-                    "The verification code '" + captcha + "' has been sent to the mailbox: " + recipient).get();
+                    variables).get();
+
+            return new ResponseEntity<>(HttpStatus.OK, "The verification code has been sent to the mailbox: " + recipient + ".", isSent);
         } catch (InterruptedException | ExecutionException e) {
-            return false;
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while sending the email.", false);
         }
     }
 
     @PostMapping("/verify")
-    public Boolean verify(@RequestParam String recipient, @RequestParam String captcha) {
-        return captchaService.verify(recipient, captcha);
+    public ResponseEntity<Boolean> verify(@RequestParam String recipient, @RequestParam String captcha) {
+        return new ResponseEntity<>(HttpStatus.OK, captchaService.verify(recipient, captcha));
     }
 }

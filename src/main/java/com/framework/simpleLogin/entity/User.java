@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.entity;
 
+import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
@@ -23,4 +24,8 @@ public class User {
     @Column(name = "email", nullable = false)
     @Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address")
     private String email;
+
+    public boolean isEmpty() {
+        return SimpleUtils.stringIsEmpty(email) || SimpleUtils.stringIsEmpty(password);
+    }
 }
