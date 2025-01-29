@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.framework.simpleLogin.serializer.HttpStatusSerializer;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseEntity<T> {
     @JsonSerialize(using = HttpStatusSerializer.class)
     private HttpStatus status;
