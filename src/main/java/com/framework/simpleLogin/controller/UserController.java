@@ -35,9 +35,10 @@ public class UserController {
 
         if (result != null) {
             loginAttemptService.reset(user.getEmail());
+            return new ResponseEntity<>(HttpStatus.OK, result);
         }
 
-        return new ResponseEntity<>(HttpStatus.OK, result);
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, "The username or password is incorrect.", false);
     }
 
     @GetMapping("/verify-token")
@@ -46,7 +47,7 @@ public class UserController {
     }
 
     @PatchMapping("/reset-password")
-    public ResponseEntity<Object> resetPassword(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Boolean> resetPassword(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
         Map<String, Object> result = userService.verifyByToken(token);
         User tokenUser = new User() {
             {
@@ -57,21 +58,35 @@ public class UserController {
         };
 
         if (!tokenUser.equals(user)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "User information does not match.", null);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "User information does not match.", false);
         }
 
         userService.resetPassword(user);
 
-        return new ResponseEntity<>(HttpStatus.OK, null);
+        return new ResponseEntity<>(HttpStatus.OK, true);
     }
 
     @PatchMapping("/reset-email")
-    public ResponseEntity<Object> resetEmail(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
-        return new ResponseEntity<>(HttpStatus.OK, null);
+    public ResponseEntity<Boolean> resetEmail(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        if (!userService.verifyByTokenAndId(token, user.getId())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "User information does not match.", false);
+        }
+
+        if (userService.verifyByToken(token).get("email").equals(user.getEmail())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "Consistent with the original data.", false);
+        }
+
+        userService.resetEmail(user);
+
+        return new ResponseEntity<>(HttpStatus.OK, true);
     }
 
     @PatchMapping("/reset-other-settings")
     public ResponseEntity<Object> resetOtherSettings(@RequestBody User user, @RequestHeader(value = "Authorization", required = false) String token) {
+        if (!userService.verifyByTokenAndId(token, user.getId())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "User information does not match.", null);
+        }
+
         return new ResponseEntity<>(HttpStatus.OK, null);
     }
 }

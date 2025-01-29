@@ -19,7 +19,7 @@ import java.util.Set;
 @Order(1)
 @WebFilter(urlPatterns = {"/users/*"})
 public class UserFilter implements Filter {
-    private static final Set<String> ALLOWED_PATHS = Set.of("users/register");
+    private static final Set<String> ALLOWED_PATHS = Set.of("/users/register");
     private final JwtUtils jwtUtils = new JwtUtils();
 
     @Resource

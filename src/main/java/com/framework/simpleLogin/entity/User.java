@@ -37,7 +37,7 @@ public class User {
             salt = Encryption.generateSalt();
         }
 
-        String ciphertext = Encryption.SHA256(password) + salt;
+        String ciphertext = Encryption.SHA256(password + salt);
 
         password = ciphertext + salt;
 

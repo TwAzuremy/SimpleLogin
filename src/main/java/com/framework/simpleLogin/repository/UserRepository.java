@@ -9,15 +9,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 @CacheConfig(cacheNames = CACHE_NAME.USER + ":cache#" + (7 * 24 * 3600 * 1000))
 public interface UserRepository extends JpaRepository<User, Long> {
-    User findByEmail(@Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address") String email);
+    User findUserByEmail(@Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address") String email);
+
+    User findUserById(int id);
 
     @Cacheable(key = "#email")
     boolean existsUserByEmail(@Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address") String email);
 
+    @Transactional
     @Modifying
     @Query("update User u set u.password = :password where u.email = :email")
     void updatePassword(@Param("email") String email, @Param("password") String password);
+
+    @Transactional
+    @Modifying
+    @Query("update User u set u.email = :email where u.id = :id")
+    void updateEmail(@Param("id") int id, @Param("email") String email);
 }

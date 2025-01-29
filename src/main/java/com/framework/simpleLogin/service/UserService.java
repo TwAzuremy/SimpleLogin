@@ -6,7 +6,6 @@ import com.framework.simpleLogin.exception.NullUserException;
 import com.framework.simpleLogin.exception.SamePasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CACHE_NAME;
-import com.framework.simpleLogin.utils.Encryption;
 import com.framework.simpleLogin.utils.JwtUtils;
 import com.framework.simpleLogin.utils.SimpleUtils;
 import jakarta.annotation.Resource;
@@ -48,7 +47,7 @@ public class UserService {
     }
 
     public Map<String, Object> login(User user) {
-        User dbUser = userRepository.findByEmail(user.getEmail());
+        User dbUser = userRepository.findUserByEmail(user.getEmail());
 
         if (dbUser == null) {
             throw new NullUserException("The user does not exist.");
@@ -73,8 +72,13 @@ public class UserService {
         return jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
     }
 
+    public boolean verifyByTokenAndId(String token, int id) {
+        Map<String, Object> claims = jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
+        return ((int) claims.get("id")) == id;
+    }
+
     public void resetPassword(User user) {
-        User dbUser = userRepository.findByEmail(user.getEmail());
+        User dbUser = userRepository.findUserByEmail(user.getEmail());
 
         if (dbUser == null) {
             throw new NullUserException("The user does not exist.");
@@ -85,8 +89,20 @@ public class UserService {
 
             userRepository.updatePassword(user.getEmail(), user.getPassword());
             redisService.deleteUserToken(user.getEmail());
+            return;
         }
 
         throw new SamePasswordException("The two passwords are the same.");
+    }
+
+    public void resetEmail(User user) {
+        User dbUser = userRepository.findUserById(user.getId());
+
+        if (dbUser == null) {
+            throw new NullUserException("The user does not exist.");
+        }
+
+        userRepository.updateEmail(user.getId(), user.getEmail());
+        redisService.deleteUserToken(dbUser.getEmail());
     }
 }
