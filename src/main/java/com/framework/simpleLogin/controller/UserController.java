@@ -2,10 +2,12 @@ package com.framework.simpleLogin.controller;
 
 import com.framework.simpleLogin.dto.UserDTO;
 import com.framework.simpleLogin.entity.User;
+import com.framework.simpleLogin.listener.LoginEvent;
 import com.framework.simpleLogin.service.LoginAttemptService;
 import com.framework.simpleLogin.service.UserService;
 import com.framework.simpleLogin.utils.ResponseEntity;
 import jakarta.annotation.Resource;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,9 @@ public class UserController {
 
     @Resource
     private LoginAttemptService loginAttemptService;
+
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     @PostMapping("/register")
     public ResponseEntity<Boolean> register(@RequestBody User user) {
@@ -35,15 +40,30 @@ public class UserController {
 
         if (result != null) {
             loginAttemptService.reset(user.getEmail());
+
+            eventPublisher.publishEvent(
+                    new LoginEvent(this, "User '" + user.getEmail() + "' logged in.", true)
+            );
+
             return new ResponseEntity<>(HttpStatus.OK, result);
         }
+
+        eventPublisher.publishEvent(
+                new LoginEvent(this, "User '" + user.getEmail() + "' failed to log in.", false)
+        );
 
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, "The username or password is incorrect.", false);
     }
 
     @GetMapping("/verify-token")
     public ResponseEntity<UserDTO> verify(@RequestHeader(value = "Authorization", required = false) String token) {
-        return new ResponseEntity<>(HttpStatus.OK, new UserDTO(userService.verifyByToken(token)));
+        UserDTO dto = new UserDTO(userService.verifyByToken(token));
+
+        eventPublisher.publishEvent(
+                new LoginEvent(this, "User '" + dto.getEmail() + "' logged in.", true)
+        );
+
+        return new ResponseEntity<>(HttpStatus.OK, dto);
     }
 
     @PatchMapping("/reset-password")
