@@ -10,18 +10,18 @@ import java.util.Map;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserDTO {
+public class UserResponse {
     private int id;
     private String username;
     private String email;
 
-    public UserDTO(User user) {
+    public UserResponse(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
     }
 
-    public UserDTO(Map<String, Object> map) {
+    public UserResponse(Map<String, Object> map) {
         this.id = (int) map.get("id");
         this.username = (String) map.get("username");
         this.email = (String) map.get("email");
