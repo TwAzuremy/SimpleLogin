@@ -1,3 +1,7 @@
+logging:
+    level:
+        root: info
+
 server:
     port: 13900
     error:

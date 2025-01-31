@@ -2,27 +2,32 @@ package com.framework.simpleLogin.dto;
 
 import com.framework.simpleLogin.entity.User;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Map;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class UserDTO {
     private int id;
     private String username;
     private String email;
 
-    public UserDTO(@NonNull User user) {
+    public UserDTO(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
     }
 
-    public UserDTO(Map<String, Object> claims) {
-        this.id = (int) claims.get("id");
-        this.username = (String) claims.get("username");
-        this.email = (String) claims.get("email");
+    public UserDTO(Map<String, Object> map) {
+        this.id = (int) map.get("id");
+        this.username = (String) map.get("username");
+        this.email = (String) map.get("email");
+    }
+
+    public Map<String, Object> toMap() {
+        return Map.of("id", id, "username", username, "email", email);
     }
 }

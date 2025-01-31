@@ -1,6 +1,6 @@
 package com.framework.simpleLogin.service;
 
-import com.framework.simpleLogin.mail.Email;
+import com.framework.simpleLogin.entity.Email;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -16,7 +16,6 @@ import org.thymeleaf.context.Context;
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 
 @Service
 public class EmailService {
@@ -29,16 +28,16 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String sender;
 
-    private final BiConsumer<MimeMessageHelper, Email> setEmailDetails = (helper, details) -> {
+    private void setDetails(MimeMessageHelper helper, Email email, boolean isHTML) {
         try {
             helper.setFrom(sender);
-            helper.setTo(details.getRecipient());
-            helper.setText(details.getMsgBody(), details.getIsHtml());
-            helper.setSubject(details.getSubject());
+            helper.setTo(email.getRecipient());
+            helper.setSubject(email.getSubject());
+            helper.setText(email.getMsgBody(), isHTML);
 
             // If there is an attachment, then send it.
-            if (details.getAttachment() != null) {
-                File file = new File(details.getAttachment());
+            if (email.getAttachment() != null) {
+                File file = new File(email.getAttachment());
 
                 if (file.exists()) {
                     FileSystemResource resource = new FileSystemResource(file);
@@ -48,45 +47,43 @@ public class EmailService {
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
-    };
+    }
 
     @Async
-    public CompletableFuture<Boolean> sendMail(Email details, Boolean isHtml) {
-        details.setIsHtml(isHtml);
-
+    public CompletableFuture<Boolean> send(Email email, boolean isHTML) {
         try {
-            MimeMessage mailMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);
-            setEmailDetails.accept(messageHelper, details);
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
+            setDetails(helper, email, isHTML);
 
-            javaMailSender.send(mailMessage);
+            javaMailSender.send(message);
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            return CompletableFuture.completedFuture(false);
+            throw new RuntimeException(e);
         }
     }
 
     @Async
-    public CompletableFuture<Boolean> sendTemplateMail(Email details, String HTMLTemplate, Map<String, Object> variables) {
+    public CompletableFuture<Boolean> sendByTemplate(Email email, String templatePath, Map<String, Object> variables) {
         try {
-            MimeMessage mailMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
 
             // Generate an HTML template
             Context context = new Context();
             context.setVariables(variables);
-            String template = templateEngine.process(HTMLTemplate, context);
+            String template = templateEngine.process(templatePath, context);
 
             // Save the HTML template to the msgBody.
-            details.setMsgBody(template, true);
-            setEmailDetails.accept(messageHelper, details);
+            email.setMsgBody(template);
+            setDetails(helper, email, true);
 
-            javaMailSender.send(mailMessage);
+            javaMailSender.send(message);
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            return CompletableFuture.completedFuture(false);
+            throw new RuntimeException(e);
         }
     }
 }

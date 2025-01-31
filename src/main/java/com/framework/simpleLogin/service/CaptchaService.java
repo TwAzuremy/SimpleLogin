@@ -1,62 +1,43 @@
 package com.framework.simpleLogin.service;
 
-import com.framework.simpleLogin.utils.CACHE_NAME;
+import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.utils.Gadget;
+import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
 public class CaptchaService {
     @Resource
-    private RedisService redisService;
+    private RedisUtil redisUtil;
 
-    private final long timeout = 10;
+    public boolean verify(String CACHE_NAME, String captcha, String email) {
+        String key = CACHE_NAME + ":" + email;
+        String storedCaptcha = (String) redisUtil.get(key);
 
-    /**
-     * Simple generation of captcha
-     *
-     * @param length The length of the captcha
-     * @return captcha
-     */
-    private String randCaptcha(int length) {
+        return !Gadget.StringUtils.isEmpty(storedCaptcha) && storedCaptcha.equals(captcha);
+    }
+
+    public String generate(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
 
         return IntStream.range(0, length)
-                .map(i -> ThreadLocalRandom.current().nextInt(chars.length()))
-                .mapToObj(i -> String.valueOf(chars.charAt(i)))
-                .collect(Collectors.joining());
+                .map(i -> random.nextInt(chars.length()))
+                .mapToObj(chars::charAt)
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                .toString();
     }
 
-    public String generator(int length) {
-        return randCaptcha(length);
+    public String get(String CACHE_NAME, String email) {
+        return (String) redisUtil.get(CACHE_NAME + ":" + email);
     }
 
-    public void store(String key, String captcha) {
-        redisService.set(CACHE_NAME.CAPTCHA + ":" + key, captcha, timeout, TimeUnit.MINUTES);
-    }
-
-    public Boolean verify(String key, String inputCaptcha) {
-        String redisCaptcha = (String) redisService.get(CACHE_NAME.CAPTCHA + ":" + key);
-
-        if (redisCaptcha != null) {
-            boolean result = redisCaptcha.equals(inputCaptcha.toUpperCase());
-
-            // Remove the captcha after verification
-            if (result) {
-                redisService.deleteCaptcha(key);
-            }
-
-            return result;
-        }
-
-        return false;
-    }
-
-    public String isExists(String key) {
-        return (String) redisService.get(CACHE_NAME.CAPTCHA + ":" + key);
+    public void store(String CACHE_NAME, String email, String captcha) {
+        redisUtil.set(CACHE_NAME + ":" + email, captcha, CONSTANT.CACHE_EXPIRATION_TIME.CAPTCHA, TimeUnit.MILLISECONDS);
     }
 }

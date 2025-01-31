@@ -1,108 +1,101 @@
 package com.framework.simpleLogin.service;
 
-import com.framework.simpleLogin.dto.UserDTO;
 import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.exception.NullUserException;
-import com.framework.simpleLogin.exception.SamePasswordException;
+import com.framework.simpleLogin.event.SecurityAuthenticationEvent;
+import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
-import com.framework.simpleLogin.utils.CACHE_NAME;
-import com.framework.simpleLogin.utils.JwtUtils;
-import com.framework.simpleLogin.utils.SimpleUtils;
+import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.utils.Encryption;
+import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-@Slf4j
 @Service
 public class UserService {
     @Resource
     private UserRepository userRepository;
 
     @Resource
-    private RedisService redisService;
+    private AuthenticationService authenticationService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     @Resource
     private LoginAttemptService loginAttemptService;
 
     @Resource
-    private JwtUtils jwtUtils;
+    private ApplicationEventPublisher eventPublisher;
 
-    public boolean register(User user) {
+    @Transactional
+    public void register(User user) {
         if (userRepository.existsUserByEmail(user.getEmail())) {
-            return false;
+            throw new RuntimeException("User already exists");
         }
 
-        if (SimpleUtils.stringIsEmpty(user.getUsername())) {
-            user.setUsername(user.getEmail());
-        }
+        String salt = Encryption.generateSalt();
+        String ciphertext = Encryption.SHA256(user.getPassword() + salt);
 
-        userRepository.save(user.encryption(null));
+        user.setPassword(ciphertext + salt);
+        userRepository.save(user);
 
-        redisService.delete(CACHE_NAME.USER + ":cache:" + user.getEmail());
-
-        return true;
+        redisUtil.delUserCache(user.getEmail());
     }
 
-    public Map<String, Object> login(User user) {
-        User dbUser = userRepository.findUserByEmail(user.getEmail());
+    public String login(User user) {
+        String email = user.getEmail();
 
-        if (dbUser == null) {
-            throw new NullUserException("The user does not exist.");
+        if (loginAttemptService.isLocked(email)) {
+            throw new RuntimeException("Login attempt limit exceeded");
         }
 
-        // Compare the two ciphertexts.
-        if (dbUser.equalsPassword(user.getPassword())) {
-            return new HashMap<>() {
-                {
-                    put("user", new UserDTO(dbUser));
-                    put("token", jwtUtils.generateTokenForUser(new UserDTO(dbUser)));
-                }
-            };
+        try {
+            String token = authenticationService.login(user);
+
+            redisUtil.set(
+                    CONSTANT.CACHE_NAME.USER_TOKEN + ":" + email,
+                    token,
+                    CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN,
+                    TimeUnit.MILLISECONDS
+            );
+
+            loginAttemptService.reset(email);
+
+            eventPublisher.publishEvent(
+                    new SecurityAuthenticationEvent(
+                            this,
+                            "The user '" + email + "' has successfully passed the security authentication and logged in."
+                    )
+            );
+
+            return token;
+        } catch (RuntimeException e) {
+            loginAttemptService.failed(email);
+
+            eventPublisher.publishEvent(
+                    new SecurityAuthenticationEvent(
+                            this,
+                            "User '" + email + "' failed security authentication, access denied."
+                    )
+            );
+
+            throw new InvalidAccountOrPasswordException("The account or password is incorrect.");
         }
-
-        loginAttemptService.failed(user.getEmail());
-
-        return null;
     }
 
-    public Map<String, Object> verifyByToken(String token) {
-        return jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
-    }
+    public void logout() {
+        String email = authenticationService.logout();
+        redisUtil.delUserToken(email);
 
-    public boolean verifyByTokenAndId(String token, int id) {
-        Map<String, Object> claims = jwtUtils.getClaims(token.substring(SimpleUtils.authorizationPrefix.length()));
-        return ((int) claims.get("id")) == id;
-    }
-
-    public void resetPassword(User user) {
-        User dbUser = userRepository.findUserByEmail(user.getEmail());
-
-        if (dbUser == null) {
-            throw new NullUserException("The user does not exist.");
-        }
-
-        if (!dbUser.equalsPassword(user.getPassword())) {
-            user.encryption(null);
-
-            userRepository.updatePassword(user.getEmail(), user.getPassword());
-            redisService.deleteUserToken(user.getEmail());
-            return;
-        }
-
-        throw new SamePasswordException("The two passwords are the same.");
-    }
-
-    public void resetEmail(User user) {
-        User dbUser = userRepository.findUserById(user.getId());
-
-        if (dbUser == null) {
-            throw new NullUserException("The user does not exist.");
-        }
-
-        userRepository.updateEmail(user.getId(), user.getEmail());
-        redisService.deleteUserToken(dbUser.getEmail());
+        eventPublisher.publishEvent(
+                new SecurityAuthenticationEvent(
+                        this,
+                        "The user '" + email + "' has successfully logged out."
+                )
+        );
     }
 }
