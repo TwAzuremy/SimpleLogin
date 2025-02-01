@@ -19,7 +19,7 @@ public class CaptchaService {
         String key = CACHE_NAME + ":" + email;
         String storedCaptcha = (String) redisUtil.get(key);
 
-        return !Gadget.StringUtils.isEmpty(storedCaptcha) && storedCaptcha.equals(captcha);
+        return !Gadget.StringUtils.isEmpty(storedCaptcha) && storedCaptcha.equals(captcha.toUpperCase());
     }
 
     public String generate(int length) {

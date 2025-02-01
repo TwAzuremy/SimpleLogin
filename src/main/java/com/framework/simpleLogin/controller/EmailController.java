@@ -1,6 +1,7 @@
 package com.framework.simpleLogin.controller;
 
 import com.framework.simpleLogin.annotation.Debounce;
+import com.framework.simpleLogin.dto.EmailRequest;
 import com.framework.simpleLogin.entity.Email;
 import com.framework.simpleLogin.service.CaptchaService;
 import com.framework.simpleLogin.service.EmailService;
@@ -23,9 +24,10 @@ public class EmailController {
     @Resource
     private EmailService emailService;
 
-    @Debounce(key = "#email")
+    @Debounce(key = "#request")
     @PostMapping("/send-register-captcha")
-    public ResponseEntity<Boolean> sendRegisterCaptcha(@RequestBody String email) {
+    public ResponseEntity<Boolean> sendRegisterCaptcha(@RequestBody EmailRequest request) {
+        String email = request.getEmail();
         String captcha = captchaService.get(CONSTANT.CACHE_NAME.CAPTCHA_REGISTER, email);
 
         if (Gadget.StringUtils.isEmpty(captcha)) {
@@ -33,7 +35,7 @@ public class EmailController {
             captchaService.store(CONSTANT.CACHE_NAME.CAPTCHA_REGISTER, email, captcha);
         }
 
-        String content = "To confirm this email for you account, enter the following captcha in the app:";
+        String content = "To confirm this email for you account, enter the following captcha in the app (Valid for 30 minutes.):";
         Map<String, Object> variables = Map.of("username", email, "content", content, "code", captcha);
 
         Email details = new Email();
@@ -41,7 +43,7 @@ public class EmailController {
         details.setSubject("Register Captcha");
 
         try {
-            boolean isSend = emailService.sendByTemplate(details, "mail/CaptchaHTML.html", variables).get();
+            boolean isSend = emailService.sendByTemplate(details, CONSTANT.OTHER.CAPTCHA_TEMPLATE, variables).get();
 
             return new ResponseEntity<>(HttpStatus.OK, isSend);
         } catch (InterruptedException | ExecutionException e) {

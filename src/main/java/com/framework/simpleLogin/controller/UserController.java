@@ -58,9 +58,4 @@ public class UserController {
 
         return new ResponseEntity<>(HttpStatus.OK, new UserResponse(claims));
     }
-
-    @PostMapping("/test-api")
-    public ResponseEntity<String> testApi() {
-        return new ResponseEntity<>(HttpStatus.OK, "Test API.");
-    }
 }

@@ -37,7 +37,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
          * and then it will be caught by the security default exception handler,
          * returning a 401 http status code.
          */
-        if (CONSTANT.OTHER.ALLOWED_PATH.stream().anyMatch(path::contains)) {
+        if (CONSTANT.OTHER.JWT_ALLOWED_PATH.stream().anyMatch(path::contains)) {
             filterChain.doFilter(request, response);
             return;
         }

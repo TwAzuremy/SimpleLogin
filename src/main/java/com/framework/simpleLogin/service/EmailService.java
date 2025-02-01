@@ -60,7 +60,7 @@ public class EmailService {
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            return CompletableFuture.completedFuture(false);
         }
     }
 
@@ -83,7 +83,7 @@ public class EmailService {
 
             return CompletableFuture.completedFuture(true);
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            return CompletableFuture.completedFuture(false);
         }
     }
 }

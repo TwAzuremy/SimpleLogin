@@ -2,6 +2,7 @@ package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.event.SecurityAuthenticationEvent;
+import com.framework.simpleLogin.exception.AccountLoginLockedException;
 import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
@@ -50,7 +51,7 @@ public class UserService {
         String email = user.getEmail();
 
         if (loginAttemptService.isLocked(email)) {
-            throw new RuntimeException("Login attempt limit exceeded");
+            throw new AccountLoginLockedException("Login attempt limit exceeded", loginAttemptService.getAttempts(email));
         }
 
         try {

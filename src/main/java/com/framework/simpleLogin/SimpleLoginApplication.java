@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.ServletComponentScan;
 
 @SpringBootApplication
-@EnableConfigurationProperties(RedisProperties.class)
+@EnableConfigurationProperties({RedisProperties.class})
 @ServletComponentScan
 public class SimpleLoginApplication {
 
