@@ -1,6 +1,8 @@
-package com.framework.simpleLogin.exception;
+package com.framework.simpleLogin.advice;
 
 import com.framework.simpleLogin.event.JwtAuthenticationTokenEvent;
+import com.framework.simpleLogin.exception.*;
+import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.ResponseEntity;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -27,6 +29,25 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
+    }
+
+    @ExceptionHandler(AccountLoginLockedException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ResponseEntity<Boolean> handleAccountLoginLockedException(AccountLoginLockedException e) {
+        ResponseEntity<Boolean> response = new ResponseEntity<>(HttpStatus.TOO_MANY_REQUESTS, e.getMessage(), false);
+        response.addHeader("Retry-After", String.valueOf(CONSTANT.CACHE_EXPIRATION_TIME.ACCOUNT_LOCKED))
+                .addHeader("X-Rate-Limit", String.valueOf(e.getLimit()));
+
+        return response;
+    }
+
+    @ExceptionHandler(FrequentRequestException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ResponseEntity<Boolean> handleFrequentRequestException(FrequentRequestException e) {
+        ResponseEntity<Boolean> response = new ResponseEntity<>(HttpStatus.TOO_MANY_REQUESTS, e.getMessage(), false);
+        response.addHeader("Retry-After", String.valueOf(CONSTANT.CACHE_EXPIRATION_TIME.API_DEBOUNCE));
+
+        return response;
     }
 
     @ExceptionHandler(InvalidCaptchaException.class)
