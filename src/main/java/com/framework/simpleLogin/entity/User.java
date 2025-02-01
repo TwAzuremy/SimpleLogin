@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.entity;
 
+import com.framework.simpleLogin.utils.CONSTANT;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
@@ -23,7 +24,7 @@ public class User {
     private String password;
 
     @Column(name = "email", nullable = false)
-    @Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address")
+    @Pattern(regexp = CONSTANT.REGEX.EMAIL, message = "Invalid email address")
     private String email;
 }
 

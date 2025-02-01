@@ -7,10 +7,10 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-@CacheConfig(cacheNames = CONSTANT.CACHE_NAME.USER_CACHE + "#" + CONSTANT.CACHE_EXPIRATION_TIME.USER_CACHE)
+@CacheConfig(cacheNames = CONSTANT.CACHE_NAME.USER_CACHE + "@user-cache")
 public interface UserRepository extends JpaRepository<User, Integer> {
-    User findUserByEmail(@Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address") String email);
+    User findUserByEmail(@Pattern(regexp = CONSTANT.REGEX.EMAIL, message = "Invalid email address") String email);
 
     @Cacheable(key = "#email")
-    boolean existsUserByEmail(@Pattern(regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address") String email);
+    boolean existsUserByEmail(@Pattern(regexp = CONSTANT.REGEX.EMAIL, message = "Invalid email address") String email);
 }
