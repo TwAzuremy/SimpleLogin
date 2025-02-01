@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Debounce {
+    String cacheName() default CONSTANT.CACHE_NAME.API_DEBOUNCE;
     String key();
     long timeout() default CONSTANT.CACHE_EXPIRATION_TIME.API_DEBOUNCE_TIME;
     TimeUnit timeUnit() default TimeUnit.MILLISECONDS;

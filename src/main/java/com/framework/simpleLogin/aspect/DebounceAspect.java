@@ -1,7 +1,7 @@
 package com.framework.simpleLogin.aspect;
 
 import com.framework.simpleLogin.annotation.Debounce;
-import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.exception.FrequentRequestException;
 import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -23,11 +23,11 @@ public class DebounceAspect {
 
     @Around("@annotation(debounce)")
     public Object debounce(ProceedingJoinPoint joinPoint, Debounce debounce) throws Throwable {
-        String paramKey = generateKey(joinPoint, debounce.key());
-        String redisKey = CONSTANT.CACHE_NAME.API_DEBOUNCE + ":" + paramKey;
+        String paramKey = generateKey(joinPoint, debounce.key()).toString();
+        String redisKey = debounce.cacheName() + ":" + paramKey;
 
         if (Boolean.TRUE.equals(redisUtil.hasKey(redisKey))) {
-            throw new RuntimeException("The request is too frequent, please try again later.");
+            throw new FrequentRequestException("The request is too frequent, please try again later.");
         }
 
         redisUtil.set(redisKey, "locked", debounce.timeout(), debounce.timeUnit());
@@ -35,7 +35,7 @@ public class DebounceAspect {
         return joinPoint.proceed();
     }
 
-    private String generateKey(ProceedingJoinPoint joinPoint, String keyExpression) {
+    private Object generateKey(ProceedingJoinPoint joinPoint, String keyExpression) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Object[] args = joinPoint.getArgs();
 
@@ -46,6 +46,6 @@ public class DebounceAspect {
             context.setVariable(params[i], args[i]);
         }
 
-        return parser.parseExpression(keyExpression).getValue(context, String.class);
+        return parser.parseExpression(keyExpression).getValue(context, Object.class);
     }
 }
