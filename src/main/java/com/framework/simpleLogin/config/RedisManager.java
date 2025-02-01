@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.config;
 
+import com.framework.simpleLogin.utils.CONSTANT;
 import org.springframework.data.redis.cache.*;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -16,19 +17,26 @@ public class RedisManager extends RedisCacheManager {
 
     @Override
     protected RedisCache createRedisCache(String name, RedisCacheConfiguration cacheConfiguration) {
-        int lastIndexOf = name.lastIndexOf("#");
+        int hashtagLastIndexOf = name.lastIndexOf("#");
+        int atSymbolLastIndexOf = name.lastIndexOf("@");
 
-        if (lastIndexOf > -1) {
-            String ttl = name.substring(lastIndexOf + 1);
-            Duration duration = Duration.ofMillis(Long.parseLong(ttl));
+        if (hashtagLastIndexOf > -1) {
+            String ttl = name.substring(hashtagLastIndexOf + 1);
 
-            cacheConfiguration = cacheConfiguration.entryTtl(duration)
-                    .computePrefixWith(PREFIX)
-                    .serializeValuesWith(SERIALIZATION_PAIR);
+            return this.configureCache(
+                    cacheConfiguration,
+                    name.substring(0, hashtagLastIndexOf),
+                    Long.parseLong(ttl)
+            );
+        } else if (atSymbolLastIndexOf > -1) {
+            String field = name.substring(atSymbolLastIndexOf + 1);
+            long ttl = CONSTANT.CACHE_EXPIRATION_TIME.get(field);
 
-            String cacheName = name.substring(0, lastIndexOf);
-
-            return super.createRedisCache(cacheName, cacheConfiguration);
+            return this.configureCache(
+                    cacheConfiguration,
+                    name.substring(0, atSymbolLastIndexOf),
+                    ttl
+            );
         } else {
             cacheConfiguration = cacheConfiguration
                     .computePrefixWith(PREFIX)
@@ -36,5 +44,16 @@ public class RedisManager extends RedisCacheManager {
 
             return super.createRedisCache(name, cacheConfiguration);
         }
+    }
+
+    private RedisCache configureCache(RedisCacheConfiguration configuration, String cacheName, long ttl) {
+        Duration duration = Duration.ofMillis(ttl);
+
+        configuration = configuration
+                .entryTtl(duration)
+                .computePrefixWith(PREFIX)
+                .serializeValuesWith(SERIALIZATION_PAIR);
+
+        return super.createRedisCache(cacheName, configuration);
     }
 }
