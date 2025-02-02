@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class EmailRequest {
     private String email;
+    private String username;
 
     @Override
     public String toString() {

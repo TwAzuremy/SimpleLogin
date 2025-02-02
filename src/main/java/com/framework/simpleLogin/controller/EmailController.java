@@ -25,9 +25,10 @@ public class EmailController {
     @PostMapping("/send-register-captcha")
     public ResponseEntity<Boolean> sendRegisterCaptcha(@RequestBody EmailRequest request) {
         String email = request.getEmail();
+        String username = request.getUsername();
 
         Map<String, Object> variables = new HashMap<>();
-        variables.put("username", email);
+        variables.put("username", Gadget.StringUtils.isEmpty(username) ? email : username);
         variables.put("content", "To confirm this email for your account, " +
                 "enter the following verification code in the app: (Valid for 30 minutes)");
 
@@ -45,11 +46,12 @@ public class EmailController {
     @PostMapping("/send-reset-password-captcha")
     public ResponseEntity<Boolean> sendResetPasswordCaptcha(@RequestBody EmailRequest request,
                                                             @RequestHeader(value = "Authorization") String token) {
-        String email = request.getEmail();
-        Map<String, Object> variables = Map.of(
-                "username", JwtUtil.parse(Gadget.requestTokenProcessing(token)).get("email"),
-                "content", "To reset your password, enter the following verification code in the app: (Valid for 30 minutes)"
-        );
+        String email = (String) JwtUtil.parse(Gadget.requestTokenProcessing(token)).get("email");
+        String username = request.getUsername();
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("username", Gadget.StringUtils.isEmpty(username) ? email : username);
+        variables.put("content", "To reset your password, enter the following verification code in the app: (Valid for 30 minutes)");
 
         try {
             boolean isSend = emailService.sendCaptcha(CONSTANT.CACHE_NAME.CAPTCHA_RESET_PASSWORD, email,

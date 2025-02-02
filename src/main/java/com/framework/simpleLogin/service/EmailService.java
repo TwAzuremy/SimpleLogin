@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.service;
 
+import com.framework.simpleLogin.annotation.Loggable;
 import com.framework.simpleLogin.entity.Email;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.Gadget;
@@ -56,6 +57,7 @@ public class EmailService {
     }
 
     @Async
+    @Loggable(recordResult = false)
     public CompletableFuture<Boolean> send(Email email, boolean isHTML) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -71,6 +73,7 @@ public class EmailService {
     }
 
     @Async
+    @Loggable(recordResult = false)
     public CompletableFuture<Boolean> sendByTemplate(Email email, String templatePath, Map<String, Object> variables) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -94,6 +97,7 @@ public class EmailService {
     }
 
     @Async
+    @Loggable(recordResult = false)
     public CompletableFuture<Boolean> sendCaptcha(String cacheName, String email, String subject, Map<String, Object> variables) throws ExecutionException, InterruptedException {
         String captcha = captchaService.get(cacheName, email);
 
@@ -101,8 +105,6 @@ public class EmailService {
             captcha = captchaService.generate(6);
             captchaService.store(cacheName, email, captcha);
         }
-
-        System.out.println(variables);
 
         variables.put("code", captcha);
 
