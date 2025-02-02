@@ -10,15 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ExceptionController {
     @RequestMapping("/InvalidJwtException")
     public void InvalidJwtException(HttpServletRequest request) {
-        String message = (String) request.getAttribute("filter.exception.message");
+        String message = ((Exception) request.getAttribute("filter.exception")).getMessage();
+        String email = ((InvalidJwtException) request.getAttribute("filter.exception")).getEmail();
 
-        throw new InvalidJwtException(message);
+        throw new InvalidJwtException(message, email);
     }
 
     @RequestMapping("/Exception")
     public void Exception(HttpServletRequest request) throws Exception {
-        System.out.println("经过异常控制层");
-
         throw ((Exception) request.getAttribute("filter.exception"));
     }
 }

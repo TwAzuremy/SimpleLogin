@@ -11,7 +11,7 @@ public class ExceptionFilter implements Filter {
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (InvalidJwtException e) {
-            servletRequest.setAttribute("filter.exception.message", e.getMessage());
+            servletRequest.setAttribute("filter.exception", e);
             servletRequest.getRequestDispatcher("/exceptions/InvalidJwtException").forward(servletRequest, servletResponse);
         } catch (Exception e) {
             servletRequest.setAttribute("filter.exception", e);
