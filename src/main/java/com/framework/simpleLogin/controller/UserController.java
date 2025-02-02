@@ -25,6 +25,10 @@ public class UserController {
     @Resource
     private RedisUtil redisUtil;
 
+    /*
+     * Use the "/send-register-captcha" API in 'EmailController' to send the captcha,
+     * and then send the received captcha with the user's information.
+     */
     @PostMapping("/register")
     public ResponseEntity<Boolean> register(@RequestBody UserCaptchaRequest userCaptchaRequest) {
         User user = userCaptchaRequest.getUser();

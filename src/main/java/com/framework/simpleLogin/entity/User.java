@@ -26,5 +26,8 @@ public class User {
     @Column(name = "email", nullable = false)
     @Pattern(regexp = CONSTANT.REGEX.EMAIL, message = "Invalid email address")
     private String email;
+
+    @Column(name = "profile")
+    private String profile;
 }
 
