@@ -1,6 +1,8 @@
 package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.entity.Email;
+import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.utils.Gadget;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -16,6 +18,7 @@ import org.thymeleaf.context.Context;
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class EmailService {
@@ -24,6 +27,9 @@ public class EmailService {
 
     @Resource
     private TemplateEngine templateEngine;
+
+    @Resource
+    private CaptchaService captchaService;
 
     @Value("${spring.mail.username}")
     private String sender;
@@ -85,5 +91,26 @@ public class EmailService {
         } catch (MessagingException e) {
             return CompletableFuture.completedFuture(false);
         }
+    }
+
+    @Async
+    public CompletableFuture<Boolean> sendCaptcha(String cacheName, String email, String subject, Map<String, Object> variables) throws ExecutionException, InterruptedException {
+        String captcha = captchaService.get(cacheName, email);
+
+        if (Gadget.StringUtils.isEmpty(captcha)) {
+            captcha = captchaService.generate(6);
+            captchaService.store(cacheName, email, captcha);
+        }
+
+        System.out.println(variables);
+
+        variables.put("code", captcha);
+
+        Email details = new Email();
+        details.setRecipient(email);
+        details.setSubject(subject);
+
+        boolean isSend = sendByTemplate(details, CONSTANT.OTHER.CAPTCHA_TEMPLATE, variables).get();
+        return CompletableFuture.completedFuture(isSend);
     }
 }

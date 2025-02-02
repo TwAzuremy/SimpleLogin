@@ -1,5 +1,6 @@
 package com.framework.simpleLogin.service;
 
+import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.event.SecurityAuthenticationEvent;
 import com.framework.simpleLogin.exception.AccountLoginLockedException;
@@ -7,12 +8,14 @@ import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.Encryption;
+import com.framework.simpleLogin.utils.Gadget;
 import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -98,5 +101,33 @@ public class UserService {
                         "The user '" + email + "' has successfully logged out."
                 )
         );
+    }
+
+    public UserResponse getInfo(int id) {
+        return userRepository.findUserExcludePasswordById(id);
+    }
+
+    @Transactional
+    public int resetPassword(int id, String oldPassword, String newPassword) {
+        User dbUser = userRepository.findUserById(id);
+        Map<String, String> separate = Gadget.StringUtils.separateCiphertext(dbUser.getPassword());
+
+        String oldPasswordCiphertext = Encryption.SHA256(oldPassword + separate.get("salt"));
+
+        // Verify that the password is correct.
+        if (!oldPasswordCiphertext.equals(separate.get("ciphertext"))) {
+            throw new InvalidAccountOrPasswordException("The password is incorrect.");
+        }
+
+        // Check whether the old password is inconsistent with the new password.
+        if (oldPassword.equals(newPassword)) {
+            throw new RuntimeException("The new password cannot be the same as the old password.");
+        }
+
+        // Encrypt the new password, and perform the modification operation.
+        String salt = Encryption.generateSalt();
+        String ciphertext = Encryption.SHA256(newPassword + salt);
+
+        return userRepository.updatePasswordById(ciphertext + salt, id);
     }
 }
