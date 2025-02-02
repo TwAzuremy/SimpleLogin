@@ -1,6 +1,5 @@
 package com.framework.simpleLogin.filter;
 
-import com.framework.simpleLogin.event.JwtAuthenticationTokenEvent;
 import com.framework.simpleLogin.exception.InvalidJwtException;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.Gadget;
@@ -11,7 +10,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.context.ApplicationEventPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,11 +21,10 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
-    @Resource
-    private RedisUtil redisUtil;
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationTokenFilter.class);
 
     @Resource
-    private ApplicationEventPublisher eventPublisher;
+    private RedisUtil redisUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -56,14 +55,12 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             String cacheToken = redisUtil.get(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + email).toString();
 
             if (!token.equals(cacheToken)) {
-                throw new InvalidJwtException("User '" + email + "' Jwt verification failed.");
+                throw new InvalidJwtException("Jwt verification failed", email);
             }
 
-            eventPublisher.publishEvent(
-                    new JwtAuthenticationTokenEvent(this, "User '" + email + "' Jwt Validated.")
-            );
+            logger.info("[{}] User email: {}", "JWT verification successful", email);
         } catch (RuntimeException e) {
-            throw new InvalidJwtException("The JWT token is invalid.");
+            throw new InvalidJwtException("The JWT token is invalid", null);
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(

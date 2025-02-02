@@ -2,7 +2,6 @@ package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.event.SecurityAuthenticationEvent;
 import com.framework.simpleLogin.exception.AccountLoginLockedException;
 import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
@@ -11,13 +10,14 @@ import com.framework.simpleLogin.utils.Encryption;
 import com.framework.simpleLogin.utils.Gadget;
 import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
-import org.springframework.context.ApplicationEventPublisher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 public class UserService {
     @Resource
@@ -32,9 +32,6 @@ public class UserService {
     @Resource
     private LoginAttemptService loginAttemptService;
 
-    @Resource
-    private ApplicationEventPublisher eventPublisher;
-
     @Transactional
     public void register(User user) {
         if (userRepository.existsUserByEmail(user.getEmail())) {
@@ -48,6 +45,7 @@ public class UserService {
         userRepository.save(user);
 
         redisUtil.delUserCache(user.getEmail());
+        log.info("[User registered] User email: {}", user.getEmail());
     }
 
     public String login(User user) {
@@ -68,26 +66,14 @@ public class UserService {
             );
 
             loginAttemptService.reset(email);
-
-            eventPublisher.publishEvent(
-                    new SecurityAuthenticationEvent(
-                            this,
-                            "The user '" + email + "' has successfully passed the security authentication and logged in."
-                    )
-            );
+            log.info("[Security verification successful] User email: {}", email);
 
             return token;
         } catch (RuntimeException e) {
             loginAttemptService.failed(email);
+            log.info("[Security verification failed] User email: {}", email);
 
-            eventPublisher.publishEvent(
-                    new SecurityAuthenticationEvent(
-                            this,
-                            "User '" + email + "' failed security authentication, access denied."
-                    )
-            );
-
-            throw new InvalidAccountOrPasswordException("The account or password is incorrect.");
+            throw new InvalidAccountOrPasswordException("The account or password is incorrect", email);
         }
     }
 
@@ -95,12 +81,7 @@ public class UserService {
         String email = authenticationService.logout();
         redisUtil.delUserToken(email);
 
-        eventPublisher.publishEvent(
-                new SecurityAuthenticationEvent(
-                        this,
-                        "The user '" + email + "' has successfully logged out."
-                )
-        );
+        log.info("[User logout] User email: {}", email);
     }
 
     public UserResponse getInfo(int id) {
@@ -116,12 +97,12 @@ public class UserService {
 
         // Verify that the password is correct.
         if (!oldPasswordCiphertext.equals(separate.get("ciphertext"))) {
-            throw new InvalidAccountOrPasswordException("The password is incorrect.");
+            throw new InvalidAccountOrPasswordException("The password is incorrect", dbUser.getEmail());
         }
 
         // Check whether the old password is inconsistent with the new password.
         if (oldPassword.equals(newPassword)) {
-            throw new RuntimeException("The new password cannot be the same as the old password.");
+            throw new InvalidAccountOrPasswordException("The new password cannot be the same as the old password", dbUser.getEmail());
         }
 
         // Encrypt the new password, and perform the modification operation.

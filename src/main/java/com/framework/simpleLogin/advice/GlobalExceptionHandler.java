@@ -1,32 +1,29 @@
 package com.framework.simpleLogin.advice;
 
-import com.framework.simpleLogin.event.JwtAuthenticationTokenEvent;
 import com.framework.simpleLogin.exception.*;
 import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.utils.Gadget;
 import com.framework.simpleLogin.utils.ResponseEntity;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailSendException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
-    @Resource
-    private ApplicationEventPublisher eventPublisher;
+    private void ContainsUserLog(String message, String email) {
+        if (!Gadget.StringUtils.isEmpty(email)) {
+            log.info("[{}] User email: {}", message, email);
+        }
+    }
 
     @ExceptionHandler(InvalidJwtException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<Boolean> handleInvalidJwtException(InvalidJwtException e) {
-        eventPublisher.publishEvent(
-                new JwtAuthenticationTokenEvent(this, e.getMessage())
-        );
+        this.ContainsUserLog(e.getMessage(), e.getEmail());
 
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
     }
@@ -59,13 +56,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidAccountOrPasswordException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<Boolean> handleInvalidAccountOrPasswordException(InvalidAccountOrPasswordException e) {
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, "The account or password is incorrect.", false);
+        this.ContainsUserLog(e.getMessage(), e.getEmail());
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
     }
 
     @ExceptionHandler(MailSendException.class)
     @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
     public ResponseEntity<Boolean> handleMailConnectException(MailSendException e) {
-        logger.warn("Mail send failed.", e);
+        log.warn("Mail send failed.", e);
 
         return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, "Mail send failed.", false);
     }
@@ -73,7 +72,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Boolean> handleException(Exception e) {
-        logger.warn("An error occurred on the server.", e);
+        log.warn("An error occurred on the server.", e);
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "An error occurred on the server.", false);
     }
