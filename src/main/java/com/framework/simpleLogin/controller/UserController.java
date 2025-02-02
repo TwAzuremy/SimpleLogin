@@ -59,7 +59,32 @@ public class UserController {
     @GetMapping("/get-info")
     public ResponseEntity<UserResponse> getInfo(@RequestHeader(value = "Authorization") String token) {
         Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
+        int id = (int) claims.get("id");
 
-        return new ResponseEntity<>(HttpStatus.OK, new UserResponse(claims));
+        return new ResponseEntity<>(HttpStatus.OK, userService.getInfo(id));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Integer> resetPassword(
+            @RequestBody UserCaptchaRequest userCaptchaRequest,
+            @RequestHeader(value = "Authorization") String token) {
+
+        Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
+        int id = (int) claims.get("id");
+        String email = (String) claims.get("email");
+        String captcha = userCaptchaRequest.getCaptcha();
+
+        if (!captchaService.verify(CONSTANT.CACHE_NAME.CAPTCHA_RESET_PASSWORD, captcha, email)) {
+            throw new InvalidCaptchaException("Captcha verification failed.");
+        }
+
+        if (userCaptchaRequest.getAttachment() instanceof Map<?, ?> attachment) {
+            return new ResponseEntity<>(HttpStatus.OK, userService.resetPassword(
+                    id,
+                    (String) attachment.get("oldPassword"),
+                    (String) attachment.get("newPassword")));
+        }
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, -1);
     }
 }

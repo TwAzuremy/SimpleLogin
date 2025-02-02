@@ -9,4 +9,5 @@ import lombok.Setter;
 public class UserCaptchaRequest {
     private User user;
     private String captcha;
+    private Object attachment;
 }

@@ -2,6 +2,7 @@ package com.framework.simpleLogin.config;
 
 import com.framework.simpleLogin.filter.JwtAuthenticationTokenFilter;
 import com.framework.simpleLogin.utils.Encryption;
+import com.framework.simpleLogin.utils.Gadget;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -31,12 +34,11 @@ public class SecurityConfig {
 
             @Override
             public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                String encodedCiphertext = encodedPassword.substring(0, 64);
-                String encodedSalt = encodedPassword.substring(64, 96);
+                Map<String, String> separate = Gadget.StringUtils.separateCiphertext(encodedPassword);
 
-                String ciphertext = Encryption.SHA256(rawPassword.toString() + encodedSalt);
+                String ciphertext = Encryption.SHA256(rawPassword.toString() + separate.get("salt"));
 
-                return ciphertext.equals(encodedCiphertext);
+                return ciphertext.equals(separate.get("ciphertext"));
             }
         };
     }
@@ -53,7 +55,7 @@ public class SecurityConfig {
                                         "/users/register",
                                         "/users/login",
                                         "/exceptions/*",
-                                        "/email/*"
+                                        "/email/send-register-captcha"
                                 )
                                 .permitAll()
                                 .anyRequest()

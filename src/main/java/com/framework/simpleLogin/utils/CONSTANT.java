@@ -15,6 +15,7 @@ public final class CONSTANT {
         public static final String API = "api";
 
         public static final String CAPTCHA_REGISTER = CAPTCHA + ":register";
+        public static final String CAPTCHA_RESET_PASSWORD = CAPTCHA + ":reset-password";
 
         public static final String USER_CACHE = USER + ":cache";
         public static final String USER_TOKEN = USER + ":token";
