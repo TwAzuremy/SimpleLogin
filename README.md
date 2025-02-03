@@ -46,25 +46,25 @@
 git clone https://github.com/TwAzuremy/SimpleLogin.git
 ```
 
-2. 创建数据库：执行 [init.sql](src\main\resources\sql) 进行初始化
+2. 创建数据库：执行 [init.sql](src/main/resources/sql) 进行初始化
 
 3. 更换配置：
-   1. 填写各应用的账号密码：[application-prod.yml](src\main\resources\application-prod.yml)
-   2. 将 [application.yml](src\main\resources\application.yml) 的 `spring.profiles.active: dev` 改为 `prod`
+   1. 填写各应用的账号密码：[application-prod.yml](src/main/resources/application-prod.yml)
+   2. 将 [application.yml](src/main/resources/application.yml) 的 `spring.profiles.active: dev` 改为 `prod`
 
 ## ⚙️ 配置说明
 
-1. [application-prod.yml](src\main\resources\application-prod.yml)
+1. [application-prod.yml](src/main/resources/application-prod.yml)
 
-| 环境变量                     | 默认值         | 说明                                                         |
-| :--------------------------- | :------------- | :----------------------------------------------------------- |
-| `spring.datasource.username` | /              | MySQL 账号，如是个人电脑本地运行，一般账户为 root            |
-| `spring.datasource.password` | /              | MySQL 密码                                                   |
-| `spring.mail.host`           | smtp.gmail.com | smtp 链接，不同邮箱可自行上网查询，或是在该邮箱设置中查看    |
-| `spring.mail.port`           | 587            | smtp 端口，不同邮箱可自行上网查询，或是在该邮箱设置中查看    |
-| `spring.mail.username`       | /              | 发送人的邮箱账号                                             |
+| 环境变量                     | 默认值         | 说明                                                                                  |
+| :--------------------------- | :------------- | :------------------------------------------------------------------------------------ |
+| `spring.datasource.username` | /              | MySQL 账号，如是个人电脑本地运行，一般账户为 root                                     |
+| `spring.datasource.password` | /              | MySQL 密码                                                                            |
+| `spring.mail.host`           | smtp.gmail.com | smtp 链接，不同邮箱可自行上网查询，或是在该邮箱设置中查看                             |
+| `spring.mail.port`           | 587            | smtp 端口，不同邮箱可自行上网查询，或是在该邮箱设置中查看                             |
+| `spring.mail.username`       | /              | 发送人的邮箱账号                                                                      |
 | `spring.mail.password`       | /              | 开启 smtp 后的专属密码，例如谷歌需要在账号中心的添加应用专用密码, 使用该密码登录 smtp |
-| `spring.data.redis.password` | /              | Redis 的密码，如果有；如果没有，可将该配置移除               |
+| `spring.data.redis.password` | /              | Redis 的密码，如果有；如果没有，可将该配置移除                                        |
 
 ## 📂 项目结构
 
@@ -73,47 +73,47 @@ src/main/java
 │  └─com
 │      └─framework
 │          └─simpleLogin
-│              │  
+│              │
 │              ├─advice			# 全局处理 (异常捕获、添加响应头...)
-│              │      
+│              │
 │              ├─annotation		# 注解类
-│              │      
+│              │
 │              ├─aspect			# 切面类
-│              │      
+│              │
 │              ├─config			# 配置类
-│              │      
+│              │
 │              ├─controller		# 控制层 ( API 接口 )
-│              │      
+│              │
 │              ├─domain			#
-│              │      
+│              │
 │              ├─dto			# 数据传输
-│              │      
+│              │
 │              ├─entity			# 实体类 ( User )
-│              │      
+│              │
 │              ├─event			# 事件
-│              │      
+│              │
 │              ├─exception		# 自定义异常
-│              │      
+│              │
 │              ├─filter			# 过滤器
-│              │      
+│              │
 │              ├─listener		# 事件监听器
-│              │      
+│              │
 │              ├─repository		# 数据访问层
-│              │      
+│              │
 │              ├─serializer		# 自定义序列化
-│              │      
+│              │
 │              ├─service		# 服务层
-│              │  │  
+│              │  │
 │              │  └─impl
-│              │          
+│              │
 │              └─utils			# 工具类
-│                      
+│
 └─resources
-    │  
+    │
     ├─sql						# 初始化数据库
-    │      
+    │
     ├─static					# 静态文件
-    │      
+    │
     └─templates					# 模板文件
         └─mail					# 邮箱模板
 ```
@@ -122,7 +122,7 @@ src/main/java
 
 欢迎通过 Issue 或 PR 参与改进：
 
-1. Fork项目
+1. Fork 项目
 2. 创建特性分支 (`git checkout -b feature/your-feature`)
 3. 提交修改 (`git commit -am 'Add some feature'`)
 4. 推送分支 (`git push origin feature/your-feature`)
@@ -132,7 +132,6 @@ src/main/java
 
 [MIT License](/LICENSE)
 
-------
+---
 
 > 💡 **使用提示**：将 `/src/main/java/com/simpleLogin` 目录整体复制到目标项目，根据需求调整包路径和配置即可快速集成用户管理功能。建议配合 [Spring Profile](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.profiles) 进行环境隔离配置
-
