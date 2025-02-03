@@ -1,1 +1,29 @@
-<p>registration successful</p>
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <div class="container"
+        style="margin: 0 auto; padding: 24px; width: 384px; display: flex; flex-direction: column; gap: 16px; background-color: #fdfcff; border-radius: 16px; box-shadow: 0 2px 3px 0 rgba(4, 30, 66, 0.09);">
+        <header class="mail__header" style="white-space: nowrap; font-size: 1.5rem; color: #303133;">
+            <p style="margin: 0;">
+                <!--/*@thymesVar id="username" type="java.lang.String"*/-->
+                <strong th:text="${username}"></strong>, Hello!
+            </p>
+        </header>
+        <main class="mail__content" style="font-size: 0.875rem; color: #606266;">
+            <p style="margin: 0; margin-bottom: 8px;"><strong>Thank you</strong> for registering with Simple Login! 🎉
+            </p>
+            <p style="margin: 0; margin-bottom: 8px;">We're thrilled to have you on board. With Simple Login, you can
+                now enjoy secure, hassle-free access to your accounts while keeping your data protected.</p>
+            <p style="margin: 0; margin-bottom: 8px;">Need help or have questions? Reply to this email anytime - we're
+                here to help.</p>
+            <p style="margin: 0;">Best regards</p>
+        </main>
+        <div class="divide" style="height: 1px; background-color: #EBEEF5;"></div>
+        <footer class="mail__footer" style="font-size: 0.75rem; color: #909399;">
+            <p style="margin: 0;">Simple Login</p>
+        </footer>
+    </div>
+</body>
+
+</html>
