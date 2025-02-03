@@ -27,7 +27,7 @@ public class AuthenticationService {
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
         if (Objects.isNull(authentication)) {
-            throw new InvalidAccountOrPasswordException("The account or password is incorrect", user.getEmail());
+            throw new InvalidAccountOrPasswordException("The account or password is incorrect", user.getEmail(), 0);
         }
 
         UserResponse response = ((AuthenticationDetails) authentication.getPrincipal()).getUser();

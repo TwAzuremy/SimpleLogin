@@ -70,7 +70,7 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK, userService.getInfo(id));
     }
 
-    @PostMapping("/reset-password")
+    @PatchMapping("/reset-password")
     public ResponseEntity<Integer> resetPassword(
             @RequestBody UserCaptchaRequest userCaptchaRequest,
             @RequestHeader(value = "Authorization") String token) {

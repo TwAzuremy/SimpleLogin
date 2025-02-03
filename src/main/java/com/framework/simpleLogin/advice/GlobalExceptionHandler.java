@@ -28,6 +28,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
     }
 
+    @ExceptionHandler(ExistsUserException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<Boolean> handleExistsUserException(ExistsUserException e) {
+        return new ResponseEntity<>(HttpStatus.CONFLICT, e.getMessage(), false);
+    }
+
     @ExceptionHandler(AccountLoginLockedException.class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public ResponseEntity<Boolean> handleAccountLoginLockedException(AccountLoginLockedException e) {
@@ -58,7 +64,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Boolean> handleInvalidAccountOrPasswordException(InvalidAccountOrPasswordException e) {
         this.ContainsUserLog(e.getMessage(), e.getEmail());
 
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
+        ResponseEntity<Boolean> response = new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
+        response.addHeader("X-Rate-Limit", String.valueOf(e.getLimit()));
+
+        return response;
+    }
+
+    @ExceptionHandler(SamePasswordException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Boolean> handleSamePasswordException(SamePasswordException e) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
     }
 
     @ExceptionHandler(MailSendException.class)

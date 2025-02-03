@@ -3,7 +3,9 @@ package com.framework.simpleLogin.service;
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.exception.AccountLoginLockedException;
+import com.framework.simpleLogin.exception.ExistsUserException;
 import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
+import com.framework.simpleLogin.exception.SamePasswordException;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.Encryption;
@@ -35,7 +37,7 @@ public class UserService {
     @Transactional
     public void register(User user) {
         if (userRepository.existsUserByEmail(user.getEmail())) {
-            throw new RuntimeException("User already exists");
+            throw new ExistsUserException("User already exists");
         }
 
         String salt = Encryption.generateSalt();
@@ -73,7 +75,10 @@ public class UserService {
             loginAttemptService.failed(email);
             log.info("[Security verification failed] User email: {}", email);
 
-            throw new InvalidAccountOrPasswordException("The account or password is incorrect", email);
+            Object limit = redisUtil.get(CONSTANT.CACHE_NAME.USER_ATTEMPT + ":" + email);
+
+            throw new InvalidAccountOrPasswordException(
+                    "The account or password is incorrect", email, limit == null ? 1 : Integer.parseInt(limit.toString()));
         }
     }
 
@@ -97,12 +102,12 @@ public class UserService {
 
         // Verify that the password is correct.
         if (!oldPasswordCiphertext.equals(separate.get("ciphertext"))) {
-            throw new InvalidAccountOrPasswordException("The password is incorrect", dbUser.getEmail());
+            throw new InvalidAccountOrPasswordException("The password is incorrect", dbUser.getEmail(), 0);
         }
 
         // Check whether the old password is inconsistent with the new password.
         if (oldPassword.equals(newPassword)) {
-            throw new InvalidAccountOrPasswordException("The new password cannot be the same as the old password", dbUser.getEmail());
+            throw new SamePasswordException("The new password cannot be the same as the old password");
         }
 
         // Encrypt the new password, and perform the modification operation.
