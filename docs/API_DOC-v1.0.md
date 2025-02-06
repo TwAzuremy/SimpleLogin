@@ -31,9 +31,9 @@
 
   ```json
   {
-      "status": 200,		// 状态码（ 使用标准的 http 状态码 ）
-      "message": "OK",	// 描述
-      "data": {}			// 实际数据
+      "status": 200,
+      "message": "OK",
+      "data": {}	
   }
   ```
 
