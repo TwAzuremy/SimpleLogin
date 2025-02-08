@@ -20,6 +20,20 @@ public final class Gadget {
 
             return map;
         }
+
+        public static String signatureStringFormat(String method, String path, String query, String body, String timestamp, String nonce) {
+            query = Gadget.StringUtils.isEmpty(query) ? "" : query + "&";
+            body = Gadget.StringUtils.isEmpty(body) ? "" : "body=" + body + "&";
+
+            return method + path + "?" + query + body + "timestamp=" + timestamp + "&nonce=" + nonce;
+        }
+
+        public static String hideSensitive(String hasSensitive) {
+            return hasSensitive.replaceAll(
+                    "(?i)(\"?password\"?\\s*[:=]\\s*)([\"']?)([^&\"'\\s]+?)([\"']?)(?=&|\\s|$|\\b)",
+                    "$1$2***$4"
+            );
+        }
     }
 
     public static String requestTokenProcessing(String token) {

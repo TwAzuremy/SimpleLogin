@@ -1,8 +1,12 @@
 package com.framework.simpleLogin.utils;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HexFormat;
 
 public class Encryption {
     private static String byteToHex(byte[] hash) {
@@ -50,5 +54,20 @@ public class Encryption {
         rand.nextBytes(salt);
 
         return byteToHex(salt);
+    }
+
+    /**
+     * Generates a HMAC-SHA256 hash of the input data string using a secret key.
+     *
+     * @param data the input data string to be hashed
+     * @return a hexadecimal string representation of the HMAC-SHA256 hash
+     * @throws Exception if an error occurs during hash generation
+     */
+    public static String hmacSHA256(String data) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec("Azuremy".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] signBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+
+        return HexFormat.of().formatHex(signBytes);
     }
 }

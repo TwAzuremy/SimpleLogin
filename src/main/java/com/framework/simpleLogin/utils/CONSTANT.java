@@ -22,6 +22,7 @@ public final class CONSTANT {
         public static final String USER_ATTEMPT = USER + ":attempt";
 
         public static final String API_DEBOUNCE = API + ":debounce";
+        public static final String API_SIGNATURE = API + ":signature";
     }
 
     @Component
@@ -37,19 +38,22 @@ public final class CONSTANT {
         public static long API_DEBOUNCE;
         public static long ACCOUNT_LOCKED;
         public static long CAPTCHA;
+        public static long API_SIGNATURE;
 
         public CACHE_EXPIRATION_TIME(
                 @Value("${cache.expiration-time.user-cache}") long USER_CACHE,
                 @Value("${cache.expiration-time.user-token}") long USER_TOKEN,
                 @Value("${cache.expiration-time.api-debounce}") long API_DEBOUNCE,
                 @Value("${cache.expiration-time.account-locked}") long ACCOUNT_LOCKED,
-                @Value("${cache.expiration-time.captcha}") long CAPTCHA
+                @Value("${cache.expiration-time.captcha}") long CAPTCHA,
+                @Value("${cache.expiration-time.api-signature}") long API_SIGNATURE
         ) {
             CACHE_EXPIRATION_TIME.USER_CACHE = USER_CACHE;
             CACHE_EXPIRATION_TIME.USER_TOKEN = USER_TOKEN;
             CACHE_EXPIRATION_TIME.API_DEBOUNCE = API_DEBOUNCE;
             CACHE_EXPIRATION_TIME.ACCOUNT_LOCKED = ACCOUNT_LOCKED;
             CACHE_EXPIRATION_TIME.CAPTCHA = CAPTCHA;
+            CACHE_EXPIRATION_TIME.API_SIGNATURE = API_SIGNATURE;
         }
 
         public static long get(String key) {
