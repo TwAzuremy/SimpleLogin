@@ -20,20 +20,6 @@ public class GlobalExceptionHandler {
         }
     }
 
-    @ExceptionHandler(InvalidJwtException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<Boolean> handleInvalidJwtException(InvalidJwtException e) {
-        this.ContainsUserLog(e.getMessage(), e.getEmail());
-
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
-    }
-
-    @ExceptionHandler(ExistsUserException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<Boolean> handleExistsUserException(ExistsUserException e) {
-        return new ResponseEntity<>(HttpStatus.CONFLICT, e.getMessage(), false);
-    }
-
     @ExceptionHandler(AccountLoginLockedException.class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public ResponseEntity<Boolean> handleAccountLoginLockedException(AccountLoginLockedException e) {
@@ -42,6 +28,12 @@ public class GlobalExceptionHandler {
                 .addHeader("X-Rate-Limit", String.valueOf(e.getLimit()));
 
         return response;
+    }
+
+    @ExceptionHandler(ExistsUserException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<Boolean> handleExistsUserException(ExistsUserException e) {
+        return new ResponseEntity<>(HttpStatus.CONFLICT, e.getMessage(), false);
     }
 
     @ExceptionHandler(FrequentRequestException.class)
@@ -53,12 +45,6 @@ public class GlobalExceptionHandler {
         return response;
     }
 
-    @ExceptionHandler(InvalidCaptchaException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<Boolean> handleInvalidCaptchaException(InvalidCaptchaException e) {
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, "Captcha verification failed.", false);
-    }
-
     @ExceptionHandler(InvalidAccountOrPasswordException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<Boolean> handleInvalidAccountOrPasswordException(InvalidAccountOrPasswordException e) {
@@ -68,6 +54,32 @@ public class GlobalExceptionHandler {
         response.addHeader("X-Rate-Limit", String.valueOf(e.getLimit()));
 
         return response;
+    }
+
+    @ExceptionHandler(InvalidCaptchaException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<Boolean> handleInvalidCaptchaException(InvalidCaptchaException e) {
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, "Captcha verification failed.", false);
+    }
+
+    @ExceptionHandler(InvalidJwtException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<Boolean> handleInvalidJwtException(InvalidJwtException e) {
+        this.ContainsUserLog(e.getMessage(), e.getEmail());
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
+    }
+
+    @ExceptionHandler(InvalidSignatureException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<Boolean> handleInvalidSignatureException(InvalidSignatureException e) {
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Boolean> handleMissingRequestHeaderException(MissingRequestHeaderException e) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
     }
 
     @ExceptionHandler(SamePasswordException.class)
