@@ -2,10 +2,7 @@ package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.exception.AccountLoginLockedException;
-import com.framework.simpleLogin.exception.ExistsUserException;
-import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
-import com.framework.simpleLogin.exception.SamePasswordException;
+import com.framework.simpleLogin.exception.*;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.Encryption;
@@ -89,13 +86,13 @@ public class UserService {
         log.info("[User logout] User email: {}", email);
     }
 
-    public UserResponse getInfo(int id) {
-        return userRepository.findUserExcludePasswordById(id);
+    public UserResponse getInfo(long id) {
+        return userRepository.findUserExcludePasswordById(id).orElseThrow(() -> new MissingUserException("User not found"));
     }
 
     @Transactional
-    public int resetPassword(int id, String oldPassword, String newPassword) {
-        User dbUser = userRepository.findUserById(id);
+    public long resetPassword(long id, String oldPassword, String newPassword) {
+        User dbUser = userRepository.findUserById(id).orElseThrow(() -> new MissingUserException("User not found"));
         Map<String, String> separate = Gadget.StringUtils.separateCiphertext(dbUser.getPassword());
 
         String oldPasswordCiphertext = Encryption.SHA256(oldPassword + separate.get("salt"));

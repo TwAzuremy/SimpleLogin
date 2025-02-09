@@ -65,13 +65,13 @@ public class UserController {
     @GetMapping("/get-info")
     public ResponseEntity<UserResponse> getInfo(@RequestHeader(value = "Authorization") String token) {
         Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
-        int id = (int) claims.get("id");
+        long id = (long) claims.get("id");
 
         return new ResponseEntity<>(HttpStatus.OK, userService.getInfo(id));
     }
 
     @PatchMapping("/reset-password")
-    public ResponseEntity<Integer> resetPassword(
+    public ResponseEntity<Number> resetPassword(
             @RequestBody UserCaptchaRequest userCaptchaRequest,
             @RequestHeader(value = "Authorization") String token) {
 
@@ -87,7 +87,7 @@ public class UserController {
 
         if (userCaptchaRequest.getAttachment() instanceof Map<?, ?> attachment) {
             return new ResponseEntity<>(HttpStatus.OK, userService.resetPassword(
-                    (int) claims.get("id"),
+                    (long) claims.get("id"),
                     (String) attachment.get("oldPassword"),
                     (String) attachment.get("newPassword")));
         }
