@@ -2,6 +2,7 @@ package com.framework.simpleLogin.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public final class Gadget {
     public static final class StringUtils {
@@ -33,6 +34,14 @@ public final class Gadget {
                     "(?i)(\"?password\"?\\s*[:=]\\s*)([\"']?)([^&\"'\\s]+?)([\"']?)(?=&|\\s|$|\\b)",
                     "$1$2***$4"
             );
+        }
+
+        public static String format(String template, String... values) {
+            for (String value : values) {
+                template = template.replaceFirst("\\{}", value);
+            }
+
+            return template;
         }
     }
 

@@ -89,7 +89,7 @@ public final class CONSTANT {
         public static String REGISTRATION_SUCCESSFUL_TEMPLATE;
         public static int LOGIN_FAILURE_LIMIT;
 
-        public OTHER (
+        public OTHER(
                 @Value("${template.html.captcha}") String CAPTCHA_TEMPLATE,
                 @Value("${template.html.registration-successful}") String REGISTRATION_SUCCESSFUL_TEMPLATE,
                 @Value("${other.attempt.login-failure-limit}") int LOGIN_FAILURE_LIMIT
