@@ -10,3 +10,10 @@ spring:
     data:
         redis:
             password: <your redis password>
+    security:
+        oauth2:
+            client:
+                registration:
+                    github:
+                        client-id: <your github client id>
+                        client-secret: <your github client secret>
