@@ -82,6 +82,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
     }
 
+    @ExceptionHandler(MissingUserException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Boolean> handleMissingUserException(MissingUserException e) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
+    }
+
     @ExceptionHandler(SamePasswordException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Boolean> handleSamePasswordException(SamePasswordException e) {
