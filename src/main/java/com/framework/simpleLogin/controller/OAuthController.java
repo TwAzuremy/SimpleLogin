@@ -8,10 +8,7 @@ import com.framework.simpleLogin.utils.ResponseEntity;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +22,11 @@ public class OAuthController {
 
     @GetMapping("/redirect/github")
     public ResponseEntity<String> redirect(@RequestParam String code) {
+        return new ResponseEntity<>(HttpStatus.OK, code);
+    }
+
+    @PostMapping("/login/github")
+    public ResponseEntity<String> loginFromGithub(@RequestParam String code) {
         Map<String, String> config = OAUTH2.get("github");
 
         if (Objects.isNull(config)) {
