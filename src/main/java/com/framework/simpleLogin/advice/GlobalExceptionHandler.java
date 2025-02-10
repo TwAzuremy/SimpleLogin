@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     private void ContainsUserLog(String message, String email) {
         if (!Gadget.StringUtils.isEmpty(email)) {
-            log.info("[{}] User email: {}", message, email);
+            log.info("[{}] User username: {}", message, email);
         }
     }
 
@@ -92,6 +92,14 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Boolean> handleSamePasswordException(SamePasswordException e) {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
+    }
+
+    @ExceptionHandler(UnableConnectServerException.class)
+    @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
+    public ResponseEntity<Boolean> handleUnableConnectServerException(UnableConnectServerException e) {
+        log.warn("Unable connect server.", e);
+
+        return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, e.getMessage(), false);
     }
 
     @ExceptionHandler(MailSendException.class)
