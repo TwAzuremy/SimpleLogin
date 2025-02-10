@@ -61,10 +61,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/users/register",
                                 "/users/login",
-                                "/exceptions/*",
+                                "/exceptions/**",
                                 "/email/send-register-captcha",
-                                "/oauth/*",
-                                "/oauth2/*"
+                                "/oauth/**"
                         )
                         .permitAll()
                         .anyRequest()

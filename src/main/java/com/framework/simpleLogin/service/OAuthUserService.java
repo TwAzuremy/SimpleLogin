@@ -1,60 +1,97 @@
 package com.framework.simpleLogin.service;
 
-import com.framework.simpleLogin.domain.OAuthUserDetails;
-import com.framework.simpleLogin.domain.OAuthUserInfo;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.OAuthUser;
 import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.factory.OAuthUserInfoFactory;
-import com.framework.simpleLogin.repository.OAuthUserRepository;
-import com.framework.simpleLogin.repository.UserRepository;
+import com.framework.simpleLogin.exception.UnableConnectServerException;
+import com.framework.simpleLogin.utils.CONSTANT;
+import com.framework.simpleLogin.utils.JwtUtil;
+import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
-public class OAuthUserService extends DefaultOAuth2UserService {
+public class OAuthUserService {
     @Resource
-    private OAuthUserRepository oAuthUserRepository;
+    private UserService userService;
 
     @Resource
-    private UserRepository userRepository;
+    private RedisUtil redisUtil;
 
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(request);
-        String registrationId = request.getClientRegistration().getRegistrationId();
-        Map<String, Object> attributes = oAuth2User.getAttributes();
+    public String exchangeCodeForToken(String code, Map<String, String> config) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("client_id", config.get("client-id"));
+        params.add("client_secret", config.get("client-secret"));
+        params.add("code", code);
 
-        OAuthUserInfo userInfo = OAuthUserInfoFactory.getUserInfo(registrationId, attributes);
-        User user = findOrCreateUser(userInfo, registrationId);
+        HttpHeaders headers = new HttpHeaders() {
+            {
+                setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            }
+        };
 
-        return new OAuthUserDetails(user, attributes);
+        // Send the code to the server in exchange for a token
+        HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
+        JsonNode response = new RestTemplate().postForObject(config.get("token-uri"), httpEntity, JsonNode.class);
+
+        if (response != null && !response.isEmpty()) {
+            return response.get("access_token").asText();
+        }
+
+        throw new UnableConnectServerException("Unable to connect to: " + config.get("token-uri"));
     }
 
-    public User findOrCreateUser(OAuthUserInfo userInfo, String provider) {
-        Optional<OAuthUser> oAuthUser = oAuthUserRepository.findByProviderAndProviderId(provider, userInfo.getProviderId());
+    public OAuthUser getUserForToken(String accessToken, String uri, String provider) {
+        HttpHeaders headers = new HttpHeaders() {
+            {
+                set("Authorization", CONSTANT.OTHER.AUTHORIZATION_PREFIX + accessToken);
+            }
+        };
 
-        if (oAuthUser.isPresent()) {
-            return oAuthUser.get().getUser();
-        } else {
-            User newUser = new User();
-            newUser.setUsername(userInfo.getUsername());
-            newUser.setEmail(userInfo.getEmail());
-            userRepository.save(newUser);
+        // Send the token to the server to retrieve the user information
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        JsonNode userInfo = new RestTemplate().exchange(
+                uri, HttpMethod.GET, entity, JsonNode.class
+        ).getBody();
 
-            OAuthUser newOAuthUser = new OAuthUser();
-            newOAuthUser.setUser(newUser);
-            newOAuthUser.setProvider(provider);
-            newOAuthUser.setProviderId(userInfo.getProviderId());
-            oAuthUserRepository.save(newOAuthUser);
+        if (userInfo != null && !userInfo.isEmpty()) {
+            User user = new User();
+            user.setUsername(userInfo.get("login").asText());
+            user.setEmail(userInfo.get("email").asText());
+            user.setProfile(userInfo.get("bio").asText());
 
-            return newUser;
+            OAuthUser oAuthUser = new OAuthUser();
+            oAuthUser.setUser(user);
+            oAuthUser.setProvider(provider);
+            oAuthUser.setProviderId(userInfo.get("node_id").asText());
+
+            return oAuthUser;
         }
+
+        throw new UnableConnectServerException("Unable to connect to: " + uri);
+    }
+
+    public String loadUser(OAuthUser oAuthUser) {
+        User user = userService.findOrCreateUser(oAuthUser);
+        String token = JwtUtil.generate(new UserResponse(user).toMap());
+
+        redisUtil.set(
+                CONSTANT.CACHE_NAME.USER_TOKEN + ":" + user.getUsername(),
+                token,
+                CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN
+        );
+
+        return token;
     }
 }

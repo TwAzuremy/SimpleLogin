@@ -1,8 +1,6 @@
 package com.framework.simpleLogin.entity;
 
-import com.framework.simpleLogin.utils.CONSTANT;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +16,7 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "username", length = 64, nullable = false)
     private String username;
@@ -26,8 +24,7 @@ public class User {
     @Column(name = "password", length = 96)
     private String password;
 
-    @Column(name = "email", unique = true, nullable = false)
-    @Pattern(regexp = CONSTANT.REGEX.EMAIL, message = "Invalid email address")
+    @Column(name = "email")
     private String email;
 
     @Column(name = "profile")

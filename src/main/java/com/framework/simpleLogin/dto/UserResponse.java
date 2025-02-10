@@ -28,6 +28,7 @@ public class UserResponse {
     public Map<String, Object> toMap() {
         return Map.of(
                 "id", id,
+                "username", username,
                 "email", email
         );
     }
