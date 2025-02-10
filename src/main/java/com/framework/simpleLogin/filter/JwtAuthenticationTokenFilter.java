@@ -48,23 +48,23 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email;
+        String username;
 
         try {
-            email = (String) JwtUtil.parse(token).get("email");
-            String cacheToken = redisUtil.get(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + email).toString();
+            username = (String) JwtUtil.parse(token).get("username");
+            String cacheToken = redisUtil.get(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + username).toString();
 
             if (!token.equals(cacheToken)) {
-                throw new InvalidJwtException("Jwt verification failed", email);
+                throw new InvalidJwtException("Jwt verification failed", username);
             }
 
-            logger.info("[{}] User email: {}", "JWT verification successful", email);
+            logger.info("[{}] User username: {}", "JWT verification successful", username);
         } catch (RuntimeException e) {
             throw new InvalidJwtException("The JWT token is invalid", null);
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                email, null, null
+                username, null, null
         );
 
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

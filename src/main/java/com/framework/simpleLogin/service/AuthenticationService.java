@@ -1,8 +1,8 @@
 package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.domain.AuthenticationDetails;
+import com.framework.simpleLogin.dto.UserLoginRequest;
 import com.framework.simpleLogin.dto.UserResponse;
-import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.exception.InvalidAccountOrPasswordException;
 import com.framework.simpleLogin.utils.JwtUtil;
 import jakarta.annotation.Resource;
@@ -19,15 +19,15 @@ public class AuthenticationService {
     @Resource
     private AuthenticationManager authenticationManager;
 
-    public String login(User user) {
+    public String login(UserLoginRequest user) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                user.getEmail(), user.getPassword()
+                user.getUsername(), user.getPassword()
         );
 
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
         if (Objects.isNull(authentication)) {
-            throw new InvalidAccountOrPasswordException("The account or password is incorrect", user.getEmail(), 0);
+            throw new InvalidAccountOrPasswordException("The account or password is incorrect", user.getUsername(), 0);
         }
 
         UserResponse response = ((AuthenticationDetails) authentication.getPrincipal()).getUser();

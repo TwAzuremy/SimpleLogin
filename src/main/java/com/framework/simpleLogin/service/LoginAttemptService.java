@@ -15,19 +15,19 @@ public class LoginAttemptService {
 
     private static final String LOGIN_ATTEMPT_KEY = CONSTANT.CACHE_NAME.USER_ATTEMPT + ":";
 
-    public boolean isLocked(String email) {
-        String attempts = (String) redisUtil.get(LOGIN_ATTEMPT_KEY + email);
+    public boolean isLocked(String username) {
+        String attempts = (String) redisUtil.get(LOGIN_ATTEMPT_KEY + username);
 
         return !Gadget.StringUtils.isEmpty(attempts) &&
                 Integer.parseInt(attempts) >= CONSTANT.OTHER.LOGIN_FAILURE_LIMIT;
     }
 
-    public int getAttempts(String email) {
-        return Integer.parseInt((String) redisUtil.get(LOGIN_ATTEMPT_KEY + email));
+    public int getAttempts(String username) {
+        return Integer.parseInt((String) redisUtil.get(LOGIN_ATTEMPT_KEY + username));
     }
 
-    public void failed(String email) {
-        String key = LOGIN_ATTEMPT_KEY + email;
+    public void failed(String username) {
+        String key = LOGIN_ATTEMPT_KEY + username;
         String attempts = (String) redisUtil.get(key);
 
         if (Gadget.StringUtils.isEmpty(attempts)) {
@@ -37,7 +37,7 @@ public class LoginAttemptService {
         }
     }
 
-    public void reset(String email) {
-        redisUtil.del(LOGIN_ATTEMPT_KEY + email);
+    public void reset(String username) {
+        redisUtil.del(LOGIN_ATTEMPT_KEY + username);
     }
 }

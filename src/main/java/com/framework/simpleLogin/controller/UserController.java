@@ -1,6 +1,7 @@
 package com.framework.simpleLogin.controller;
 
 import com.framework.simpleLogin.dto.UserCaptchaRequest;
+import com.framework.simpleLogin.dto.UserLoginRequest;
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.event.UserRegisteredEvent;
@@ -51,7 +52,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody User user) {
+    public ResponseEntity<String> login(@RequestBody UserLoginRequest user) {
         return new ResponseEntity<>(HttpStatus.OK, userService.login(user));
     }
 
@@ -65,7 +66,7 @@ public class UserController {
     @GetMapping("/get-info")
     public ResponseEntity<UserResponse> getInfo(@RequestHeader(value = "Authorization") String token) {
         Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
-        long id = (long) claims.get("id");
+        long id = Long.parseLong(claims.get("id").toString());
 
         return new ResponseEntity<>(HttpStatus.OK, userService.getInfo(id));
     }
@@ -80,7 +81,7 @@ public class UserController {
         if (!captchaService.verify(
                 CONSTANT.CACHE_NAME.CAPTCHA_RESET_PASSWORD,
                 userCaptchaRequest.getCaptcha(),
-                (String) claims.get("email")
+                (String) claims.get("username")
         )) {
             throw new InvalidCaptchaException("Captcha verification failed.");
         }
