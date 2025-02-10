@@ -53,9 +53,8 @@ spring:
             client:
                 registration:
                     github:
-                        redirect-uri: http://localhost:13900/oauth/redirect
-                        scope:
-                            - user:email
+                        redirect-uri: http://localhost:13900/oauth/redirect/github
+                        scope: user:email
                 provider:
                     github:
                         authorization-uri: https://github.com/login/oauth/authorize
