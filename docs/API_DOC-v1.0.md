@@ -415,6 +415,65 @@
 
   > 其他可能的错误码请参考：[邮箱相关错误码](#412-邮箱接口)
 
+### 3.3 第三方接口
+
+#### 3.3.1 获取重定向链接
+
+- 接口说明：获取重定向链接，用于跳转到第三方登录认证页面
+
+- 请求地址：`/oauth/get-redirect-address`
+
+- 请求方法：`GET`
+
+- 请求参数：
+
+  | 参数名     | 类型   | 必填 | 描述       |
+  | ---------- | ------ | ---- | ---------- |
+  | `provider` | String | 是   | 第三方名称 |
+
+- 响应成功示例：
+
+  ```json
+  {
+      "status": 200,
+      "message": "OK",
+      "data": "https://github.com/login/oauth/authorize?client_id=xxx&redirect_uri=http://localhost:13900/oauth/redirect/github&response_type=code&scope=user:email"
+  }
+  ```
+
+- 响应失败示例：
+
+  ```json
+  {
+      "status": 400,
+      "message": "Bad Request"
+  }
+  ```
+
+#### 3.3.2 回调地址
+
+- 接口说明：第三方认证后，触发的回调地址
+
+- 请求地址：`/oauth/redirect`
+
+- 请求方法：`GET`
+
+- 请求参数：
+
+  | 参数名 | 类型   | 必填 | 描述                       |
+  | ------ | ------ | ---- | -------------------------- |
+  | `code` | String | 是   | 第三方认证后回调的 code 值 |
+
+- 响应成功示例：
+
+  ```json
+  {
+      "status": 200,
+      "message": "OK",
+      "data": code
+  }
+  ```
+
 ## **4. 错误码表**
 
 ### 4.1 接口其他错误码
@@ -463,7 +522,7 @@
 - `hmacSHA256` 加密前字符串结构
 
   ```
-      POST /api/test ?string=Hello&suffix=World &body={"separate":","} &timestamp=1739002152986 &nonce=3d1cff
+      POST /api/test ?prefix=Hello&suffix=World &body={"separate":","} &timestamp=1739002152986 &nonce=3d1cff
       ---- ---------  -------------------------  --------------------   -----------------------  ------------
      Method   URI             Query                     Body                  Timestamp              Nonce
   ```
@@ -481,7 +540,10 @@ const TIMESTAMP = Date.now();
 const NONCE = Math.random().toString(36).substr(2, 8);
 
 let QUERY = pm.request.url.query.map(item => `${item.key}=${item.value}`).join('&');
-let BODY = JSON.stringify(pm.request.body.raw).replace(/\\[rn]/g, "").replace(/[\\\s]+/g, "").replace(/^"|"$/g, "");
+let BODY = JSON.stringify(pm.request.body.raw)
+				.replace(/\\[rn]/g, "")
+				.replace(/[\\\s]+/g, "")
+				.replace(/^"|"$/g, "");
 
 // ==================== processing ====================
 
