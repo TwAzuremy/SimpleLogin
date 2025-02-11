@@ -2,31 +2,22 @@ package com.framework.simpleLogin.service;
 
 import com.framework.simpleLogin.dto.UserLoginRequest;
 import com.framework.simpleLogin.dto.UserResponse;
-import com.framework.simpleLogin.entity.OAuthUser;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.exception.*;
-import com.framework.simpleLogin.repository.OAuthUserRepository;
 import com.framework.simpleLogin.repository.UserRepository;
-import com.framework.simpleLogin.utils.CONSTANT;
-import com.framework.simpleLogin.utils.Encryption;
-import com.framework.simpleLogin.utils.Gadget;
-import com.framework.simpleLogin.utils.RedisUtil;
+import com.framework.simpleLogin.utils.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class UserService {
     @Resource
     private UserRepository userRepository;
-
-    @Resource
-    private OAuthUserRepository oAuthUserRepository;
 
     @Resource
     private AuthenticationService authenticationService;
@@ -66,11 +57,13 @@ public class UserService {
         }
 
         try {
-            String token = authenticationService.login(user);
+            UserResponse response = authenticationService.login(user);
+            String token = JwtUtil.generate(response.toMap());
 
-            // TODO 修改缓存键: 待定
+            String cacheName = response.getTABLE() + "*" +  response.getId() + "-" + response.sign();
+
             redisUtil.set(
-                    CONSTANT.CACHE_NAME.USER_TOKEN + ":" + username,
+                    CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName,
                     token,
                     CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN
             );
@@ -91,23 +84,6 @@ public class UserService {
         }
     }
 
-    @Transactional
-    public User findOrCreateUser(OAuthUser oAuthUser) {
-        Optional<OAuthUser> dbOAuthUser = oAuthUserRepository.findByProviderAndProviderId(
-                oAuthUser.getProvider(), oAuthUser.getProviderId()
-        );
-
-        if (dbOAuthUser.isPresent()) {
-            return dbOAuthUser.get().getUser();
-        }
-
-        User user = oAuthUser.getUser();
-        userRepository.save(user);
-        oAuthUserRepository.save(oAuthUser);
-
-        return oAuthUser.getUser();
-    }
-
     public void logout() {
         String email = authenticationService.logout();
         redisUtil.delUserToken(email);
@@ -116,7 +92,8 @@ public class UserService {
     }
 
     public UserResponse getInfo(long id) {
-        return userRepository.findUserExcludePasswordById(id).orElseThrow(() -> new MissingUserException("User not found"));
+        return userRepository.findUserExcludePasswordById(id)
+                .orElseThrow(() -> new MissingUserException("User not found"));
     }
 
     @Transactional

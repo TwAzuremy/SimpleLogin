@@ -63,7 +63,9 @@ public class SecurityConfig {
                                 "/users/login",
                                 "/exceptions/**",
                                 "/email/send-register-captcha",
-                                "/oauth/**"
+                                "/oauth/get-redirect-address",
+                                "/oauth/redirect/**",
+                                "/oauth/login/**"
                         )
                         .permitAll()
                         .anyRequest()

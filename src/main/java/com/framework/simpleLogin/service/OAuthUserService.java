@@ -1,33 +1,42 @@
 package com.framework.simpleLogin.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.framework.simpleLogin.dto.OAuthUserResponse;
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.OAuthUser;
-import com.framework.simpleLogin.entity.User;
-import com.framework.simpleLogin.exception.UnableConnectServerException;
+import com.framework.simpleLogin.exception.ExpiredCodeOrTokenException;
+import com.framework.simpleLogin.exception.MissingUserException;
+import com.framework.simpleLogin.repository.OAuthUserRepository;
+import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
 import com.framework.simpleLogin.utils.JwtUtil;
 import com.framework.simpleLogin.utils.RedisUtil;
 import jakarta.annotation.Resource;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class OAuthUserService {
     @Resource
-    private UserService userService;
+    private RedisUtil redisUtil;
 
     @Resource
-    private RedisUtil redisUtil;
+    private OAuthUserRepository oAuthUserRepository;
+
+    @Resource
+    private UserRepository userRepository;
 
     public String exchangeCodeForToken(String code, Map<String, String> config) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -45,11 +54,11 @@ public class OAuthUserService {
         HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
         JsonNode response = new RestTemplate().postForObject(config.get("token-uri"), httpEntity, JsonNode.class);
 
-        if (response != null && !response.isEmpty()) {
+        if (response != null && !response.isMissingNode() && !response.isNull()) {
             return response.get("access_token").asText();
         }
 
-        throw new UnableConnectServerException("Unable to connect to: " + config.get("token-uri"));
+        throw new ExpiredCodeOrTokenException("The code has expired: " + code);
     }
 
     public OAuthUser getUserForToken(String accessToken, String uri, String provider) {
@@ -65,33 +74,110 @@ public class OAuthUserService {
                 uri, HttpMethod.GET, entity, JsonNode.class
         ).getBody();
 
-        if (userInfo != null && !userInfo.isEmpty()) {
-            User user = new User();
-            user.setUsername(userInfo.get("login").asText());
-            user.setEmail(userInfo.get("email").asText());
-            user.setProfile(userInfo.get("bio").asText());
+        if (userInfo != null && !userInfo.isMissingNode() && !userInfo.isNull()) {
+            return OAuthUser.builder()
+                    .providerId(userInfo.get("node_id").asText())
+                    .provider(provider)
+                    .username(userInfo.get("login").asText())
+                    .email(userInfo.get("email").asText())
+                    .profile(userInfo.get("bio").asText())
+                    .build();
+        }
 
-            OAuthUser oAuthUser = new OAuthUser();
-            oAuthUser.setUser(user);
-            oAuthUser.setProvider(provider);
-            oAuthUser.setProviderId(userInfo.get("node_id").asText());
+        throw new ExpiredCodeOrTokenException("The token has expired: " + accessToken);
+    }
 
+    public OAuthUser codeToToken(String code, Map<String, String> config) {
+        // Trade code for token
+        String accessToken = this.exchangeCodeForToken(code, config);
+        // Use the token to obtain user information
+        return this.getUserForToken(accessToken, config.get("user-info-uri"), config.get("id"));
+    }
+
+    @Transactional
+    public String loadUser(OAuthUser oAuthUser) {
+        Optional<OAuthUser> dbOAuthUser = oAuthUserRepository.findByProviderAndProviderId(
+                oAuthUser.getProvider(), oAuthUser.getProviderId());
+
+        if (dbOAuthUser.isPresent()) {
+            return cacheToken(dbOAuthUser.get());
+        }
+
+        // Set as a unique username
+        oAuthUser.setUsername(oAuthUser.getUsername() + "#" + oAuthUser.getProvider() + "-" + oAuthUser.getProviderId());
+        oAuthUserRepository.save(oAuthUser);
+
+        return cacheToken(oAuthUser);
+    }
+
+    @Transactional
+    public int bindUser(OAuthUser oAuthUser, long userId) {
+        Optional<OAuthUser> dbOAuthUser = oAuthUserRepository.findByProviderAndProviderId(
+                oAuthUser.getProvider(), oAuthUser.getProviderId());
+
+        Optional<UserResponse> dbUser = userRepository.findUserExcludePasswordById(userId);
+
+        if (dbUser.isEmpty()) {
+            throw new MissingUserException("User not found");
+        }
+
+        // If no third-party user exists, create a new one
+        if (dbOAuthUser.isEmpty()) {
+            oAuthUser.setUser(dbUser.get().toUser());
+            oAuthUser.setUsername(oAuthUser.getUsername() + "#" + oAuthUser.getProvider() + "-" + oAuthUser.getProviderId());
+            oAuthUserRepository.save(oAuthUser);
+
+            return 1;
+        }
+
+        // TODO 可能需要验证用户是否已经绑定同一个 Provider 的第三方账号
+        // Determine whether the account has been bound by another user.
+        if (dbOAuthUser.get().getUser() != null) {
+            return -1;
+        }
+
+        // If it exists, modify the user_id
+        int result = oAuthUserRepository.updateUserIdById(dbUser.get().getId(), dbOAuthUser.get().getId());
+
+        if (result > 0) {
+            redisUtil.del(CONSTANT.CACHE_NAME.USER_CACHE + ":oauth2:" + dbOAuthUser.get().getId());
+            redisUtil.del(CONSTANT.CACHE_NAME.USER_CACHE + ":info:" + dbUser.get().getId());
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public int unbind(long userId, String oauthUserId) {
+        int result = oAuthUserRepository.deleteOAuthUserByUserIdAndId(userId, oauthUserId);
+
+        if (result > 0) {
+            redisUtil.del(CONSTANT.CACHE_NAME.USER_CACHE + ":oauth2:" + oauthUserId);
+            redisUtil.del(CONSTANT.CACHE_NAME.USER_CACHE + ":info:" + userId);
+        }
+
+        return result;
+    }
+
+    private String cacheToken(OAuthUser oAuthUser) {
+        OAuthUserResponse response = new OAuthUserResponse(oAuthUser);
+
+        String token = JwtUtil.generate(response.toMap());
+        String cacheName = response.getTABLE() + "*" + response.getUuid() + "-" + response.sign();
+
+        redisUtil.set(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName, token, CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN);
+
+        return token;
+    }
+
+    @Cacheable(cacheNames = CONSTANT.CACHE_NAME.USER_CACHE + ":oauth2@user-cache", key = "#id")
+    public Object getInfo(String id) {
+        OAuthUser oAuthUser = oAuthUserRepository.findById(id).orElseThrow(() -> new MissingUserException("User not found"));
+
+        if (oAuthUser.getUser() == null) {
             return oAuthUser;
         }
 
-        throw new UnableConnectServerException("Unable to connect to: " + uri);
-    }
-
-    public String loadUser(OAuthUser oAuthUser) {
-        User user = userService.findOrCreateUser(oAuthUser);
-        String token = JwtUtil.generate(new UserResponse(user).toMap());
-
-        redisUtil.set(
-                CONSTANT.CACHE_NAME.USER_TOKEN + ":" + user.getUsername(),
-                token,
-                CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN
-        );
-
-        return token;
+        return new UserResponse(oAuthUser.getUser());
     }
 }

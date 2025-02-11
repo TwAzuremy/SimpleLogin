@@ -1,8 +1,10 @@
 package com.framework.simpleLogin.controller;
 
+import com.framework.simpleLogin.dto.UnbindRequest;
 import com.framework.simpleLogin.entity.OAuthUser;
 import com.framework.simpleLogin.service.OAuthUserService;
 import com.framework.simpleLogin.utils.Gadget;
+import com.framework.simpleLogin.utils.JwtUtil;
 import com.framework.simpleLogin.utils.OAUTH2;
 import com.framework.simpleLogin.utils.ResponseEntity;
 import jakarta.annotation.Resource;
@@ -20,7 +22,7 @@ public class OAuthController {
     @Resource
     private OAuthUserService oAuthUserService;
 
-    @GetMapping("/redirect/github")
+    @GetMapping("/redirect")
     public ResponseEntity<String> redirect(@RequestParam String code) {
         return new ResponseEntity<>(HttpStatus.OK, code);
     }
@@ -33,15 +35,39 @@ public class OAuthController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST, null);
         }
 
-        // Trade code for token
-        String accessToken = oAuthUserService.exchangeCodeForToken(code, config);
-        // Use the token to obtain user information
-        OAuthUser oAuthUser = oAuthUserService.getUserForToken(accessToken,
-                config.get("user-info-uri"), config.get("id"));
+        OAuthUser oAuthUser = oAuthUserService.codeToToken(code, config);
 
         // If the user exists, the user information is obtained, and the token is generated;
         // If the user does not exist, create a new one in the database table and generate a token.
         return new ResponseEntity<>(HttpStatus.OK, oAuthUserService.loadUser(oAuthUser));
+    }
+
+    @PostMapping("/bind/github")
+    public ResponseEntity<Integer> bindGithub(@RequestHeader(value = "Authorization") String userToken, @RequestParam String code) {
+        Map<String, String> config = OAUTH2.get("github");
+        Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(userToken));
+        long userId = Long.parseLong(claims.get("id").toString());
+
+        if (Objects.isNull(config)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, null);
+        }
+
+        OAuthUser oAuthUser = oAuthUserService.codeToToken(code, config);
+        int result = oAuthUserService.bindUser(oAuthUser, userId);
+
+        if (result == -1) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT, "The account has been linked to another user.", null);
+        } else if (result == 0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "Account binding failed.", null);
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK, result);
+    }
+
+    @DeleteMapping("/unbind")
+    public ResponseEntity<Integer> unbind(@RequestBody UnbindRequest request) {
+        return new ResponseEntity<>(HttpStatus.OK,
+                oAuthUserService.unbind(request.getUserId(), request.getOauthUserId()));
     }
 
     @GetMapping("/get-redirect-address")
