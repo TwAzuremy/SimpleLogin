@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
@@ -51,11 +52,18 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         String username;
 
         try {
-            username = (String) JwtUtil.parse(token).get("username");
-            String cacheToken = redisUtil.get(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + username).toString();
+            Map<String, Object> claims = JwtUtil.parse(token);
+
+            username = (String) claims.get("username");
+            String id = claims.get("id").toString();
+            String table = (String) claims.get("table");
+            String sign = (String) claims.get("sign");
+
+            String cacheName = table + "*" + id + "-" + sign;
+            String cacheToken = redisUtil.get(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName).toString();
 
             if (!token.equals(cacheToken)) {
-                throw new InvalidJwtException("Jwt verification failed", username);
+                throw new InvalidJwtException("Jwt verification failed", table + ": " + id);
             }
 
             logger.info("[{}] User username: {}", "JWT verification successful", username);

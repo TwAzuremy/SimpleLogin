@@ -6,7 +6,9 @@ import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.event.UserRegisteredEvent;
 import com.framework.simpleLogin.exception.InvalidCaptchaException;
+import com.framework.simpleLogin.exception.InvalidJwtException;
 import com.framework.simpleLogin.service.CaptchaService;
+import com.framework.simpleLogin.service.OAuthUserService;
 import com.framework.simpleLogin.service.UserService;
 import com.framework.simpleLogin.utils.*;
 import jakarta.annotation.Resource;
@@ -21,6 +23,9 @@ import java.util.Map;
 public class UserController {
     @Resource
     private UserService userService;
+
+    @Resource
+    private OAuthUserService oAuthUserService;
 
     @Resource
     private CaptchaService captchaService;
@@ -64,11 +69,17 @@ public class UserController {
     }
 
     @GetMapping("/get-info")
-    public ResponseEntity<UserResponse> getInfo(@RequestHeader(value = "Authorization") String token) {
+    public ResponseEntity<?> getInfo(@RequestHeader(value = "Authorization") String token) {
         Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
-        long id = Long.parseLong(claims.get("id").toString());
 
-        return new ResponseEntity<>(HttpStatus.OK, userService.getInfo(id));
+        String table = (String) claims.get("table");
+        Object id = claims.get("id");
+
+        return new ResponseEntity<>(HttpStatus.OK, switch (table) {
+            case "user" -> userService.getInfo(Long.parseLong(id.toString()));
+            case "oauth2_user" -> oAuthUserService.getInfo(id.toString());
+            default -> throw new InvalidJwtException("Invalid table: ", (String) claims.get("username"));
+        });
     }
 
     @PatchMapping("/reset-password")

@@ -11,7 +11,7 @@ public class ExceptionController {
     @RequestMapping("/InvalidJwtException")
     public void InvalidJwtException(HttpServletRequest request) {
         String message = ((Exception) request.getAttribute("filter.exception")).getMessage();
-        String email = ((InvalidJwtException) request.getAttribute("filter.exception")).getEmail();
+        String email = ((InvalidJwtException) request.getAttribute("filter.exception")).getId();
 
         throw new InvalidJwtException(message, email);
     }

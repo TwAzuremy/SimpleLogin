@@ -1,9 +1,7 @@
 package com.framework.simpleLogin.entity;
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +11,9 @@ import java.util.List;
 @Entity
 @Table(name = "user")
 @EqualsAndHashCode(exclude = {"password"})
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +31,7 @@ public class User {
     @Column(name = "profile")
     private String profile;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OAuthUser> oAuthUsers = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private final List<OAuthUser> oAuthUsers = new ArrayList<>();
 }
 

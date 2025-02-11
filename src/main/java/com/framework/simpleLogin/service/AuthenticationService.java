@@ -19,7 +19,7 @@ public class AuthenticationService {
     @Resource
     private AuthenticationManager authenticationManager;
 
-    public String login(UserLoginRequest user) {
+    public UserResponse login(UserLoginRequest user) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 user.getUsername(), user.getPassword()
         );
@@ -30,9 +30,7 @@ public class AuthenticationService {
             throw new InvalidAccountOrPasswordException("The account or password is incorrect", user.getUsername(), 0);
         }
 
-        UserResponse response = ((AuthenticationDetails) authentication.getPrincipal()).getUser();
-
-        return JwtUtil.generate(response.toMap());
+        return ((AuthenticationDetails) authentication.getPrincipal()).getUser();
     }
 
     public String logout() {

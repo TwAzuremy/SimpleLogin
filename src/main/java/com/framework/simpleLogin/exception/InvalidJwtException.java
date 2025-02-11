@@ -4,11 +4,11 @@ import lombok.Getter;
 
 @Getter
 public class InvalidJwtException extends RuntimeException {
-    private final String email;
+    private final String id;
 
-    public InvalidJwtException(String message, String email) {
+    public InvalidJwtException(String message, String id) {
         super(message);
 
-        this.email = email;
+        this.id = id;
     }
 }
