@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private void ContainsUserLog(String message, String email) {
-        if (!Gadget.StringUtils.isEmpty(email)) {
-            log.info("[{}] User username: {}", message, email);
+    private void ContainsUserLog(String message, String id) {
+        if (!Gadget.StringUtils.isEmpty(id)) {
+            log.info("[{}] User username: {}", message, id);
         }
     }
 
@@ -34,6 +34,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<Boolean> handleExistsUserException(ExistsUserException e) {
         return new ResponseEntity<>(HttpStatus.CONFLICT, e.getMessage(), false);
+    }
+
+    @ExceptionHandler(ExpiredCodeOrTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<Boolean> handleExpiredCodeOrTokenException(ExpiredCodeOrTokenException e) {
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
     }
 
     @ExceptionHandler(FrequentRequestException.class)
@@ -65,7 +71,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidJwtException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<Boolean> handleInvalidJwtException(InvalidJwtException e) {
-        this.ContainsUserLog(e.getMessage(), e.getEmail());
+        this.ContainsUserLog(e.getMessage(), e.getId());
 
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED, e.getMessage(), false);
     }
@@ -92,14 +98,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Boolean> handleSamePasswordException(SamePasswordException e) {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST, e.getMessage(), false);
-    }
-
-    @ExceptionHandler(UnableConnectServerException.class)
-    @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
-    public ResponseEntity<Boolean> handleUnableConnectServerException(UnableConnectServerException e) {
-        log.warn("Unable connect server.", e);
-
-        return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, e.getMessage(), false);
     }
 
     @ExceptionHandler(MailSendException.class)
