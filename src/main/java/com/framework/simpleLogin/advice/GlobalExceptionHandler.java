@@ -10,6 +10,7 @@ import org.springframework.mail.MailSendException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.ResourceAccessException;
 
 @Slf4j
 @RestControllerAdvice
@@ -106,6 +107,14 @@ public class GlobalExceptionHandler {
         log.warn("Mail send failed.", e);
 
         return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, "Mail send failed.", false);
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ResponseEntity<Boolean> handleResourceAccessException(ResourceAccessException e) {
+        log.warn("Resource access failed.", e);
+
+        return new ResponseEntity<>(HttpStatus.GATEWAY_TIMEOUT, e.getMessage(), false);
     }
 
     @ExceptionHandler(Exception.class)
