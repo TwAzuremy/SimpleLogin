@@ -3,7 +3,7 @@
 ## **1. 文档概述**
 
 - **文档版本**：v1.0
-- **最后更新时间**：2025-02-03
+- **最后更新时间**：2025-02-12
 - **维护人员**：Azuremy
 
 ------
@@ -437,7 +437,7 @@
   {
       "status": 200,
       "message": "OK",
-      "data": "https://github.com/login/oauth/authorize?client_id=xxx&redirect_uri=http://localhost:13900/oauth/redirect/github&response_type=code&scope=user:email"
+      "data": "https://github.com/login/oauth/authorize?client_id=your_client_id&redirect_uri=http://localhost:13900/oauth/redirect&response_type=code&scope=user:email&state=ad0b1f035c4dc7b25fe2b08a9b8454a4"
   }
   ```
 
@@ -460,10 +460,11 @@
 
 - 请求参数：
 
-  | 参数名 | 类型   | 必填 | 描述                       |
-  | ------ | ------ | ---- | -------------------------- |
-  | `code` | String | 是   | 第三方认证后回调的 code 值 |
-
+  | 参数名         | 类型    | 必填 | 描述                                                         |
+  | -------------- | ------- | ---- | ------------------------------------------------------------ |
+  | `code`         | String  | 是   | 第三方认证后回调的 code 值                                   |
+  | `state`        | String  | 是   | 用于防止跨站请求伪造攻击                                     |
+  
 - 响应成功示例：
 
   ```json
