@@ -6,6 +6,7 @@ import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.OAuthUser;
 import com.framework.simpleLogin.exception.ExpiredCodeOrTokenException;
 import com.framework.simpleLogin.exception.MissingUserException;
+import com.framework.simpleLogin.factory.OAuthUserProviderFactory;
 import com.framework.simpleLogin.repository.OAuthUserRepository;
 import com.framework.simpleLogin.repository.UserRepository;
 import com.framework.simpleLogin.utils.CONSTANT;
@@ -19,7 +20,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,10 +39,7 @@ public class OAuthUserService {
     private UserRepository userRepository;
 
     public String exchangeCodeForToken(String code, Map<String, String> config) {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("client_id", config.get("client-id"));
-        params.add("client_secret", config.get("client-secret"));
-        params.add("code", code);
+        MultiValueMap<String, String> params = OAuthUserProviderFactory.getSendBody(code, config);
 
         HttpHeaders headers = new HttpHeaders() {
             {
@@ -54,8 +51,12 @@ public class OAuthUserService {
         HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
         JsonNode response = new RestTemplate().postForObject(config.get("token-uri"), httpEntity, JsonNode.class);
 
-        if (response != null && !response.isMissingNode() && !response.isNull()) {
-            return response.get("access_token").asText();
+        try {
+            if (response != null && !response.isMissingNode() && !response.isNull()) {
+                return response.get("access_token").asText();
+            }
+        } catch (NullPointerException e) {
+            throw new ExpiredCodeOrTokenException("The code has expired: " + code);
         }
 
         throw new ExpiredCodeOrTokenException("The code has expired: " + code);
@@ -75,13 +76,7 @@ public class OAuthUserService {
         ).getBody();
 
         if (userInfo != null && !userInfo.isMissingNode() && !userInfo.isNull()) {
-            return OAuthUser.builder()
-                    .providerId(userInfo.get("node_id").asText())
-                    .provider(provider)
-                    .username(userInfo.get("login").asText())
-                    .email(userInfo.get("email").asText())
-                    .profile(userInfo.get("bio").asText())
-                    .build();
+            return OAuthUserProviderFactory.getOAuthUser(userInfo, provider);
         }
 
         throw new ExpiredCodeOrTokenException("The token has expired: " + accessToken);
@@ -91,7 +86,7 @@ public class OAuthUserService {
         // Trade code for token
         String accessToken = this.exchangeCodeForToken(code, config);
         // Use the token to obtain user information
-        return this.getUserForToken(accessToken, config.get("user-info-uri"), config.get("id"));
+        return this.getUserForToken(accessToken, config.get("user-info-uri"), config.get("provider"));
     }
 
     @Transactional
