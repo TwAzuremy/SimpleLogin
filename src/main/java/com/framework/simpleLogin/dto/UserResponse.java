@@ -55,6 +55,10 @@ public class UserResponse {
                 .build();
     }
 
+    public String generateCacheName() {
+        return TABLE + "*" + id + "-" + this.sign();
+    }
+
     public String sign() {
         return DigestUtils.md5DigestAsHex((TABLE + id + username + email).getBytes(StandardCharsets.UTF_8));
     }

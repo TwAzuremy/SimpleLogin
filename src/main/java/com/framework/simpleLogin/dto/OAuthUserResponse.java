@@ -35,6 +35,11 @@ public class OAuthUserResponse extends UserResponse {
     }
 
     @Override
+    public String generateCacheName() {
+        return TABLE + "*" + uuid + "-" + this.sign();
+    }
+
+    @Override
     public List<OAuthUserResponse> getOAuthUserResponses() {
         return null;
     }

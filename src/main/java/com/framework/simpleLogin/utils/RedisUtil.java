@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * This class provides a simple interface for performing common Redis operations,
  * such as getting, setting, and deleting values.
- *
  */
 @Component
 public class RedisUtil {
@@ -46,10 +45,10 @@ public class RedisUtil {
     /**
      * Sets a value in Redis with a specified expiration time.
      *
-     * @param key the key of the value to set
-     * @param value the value to set
+     * @param key            the key of the value to set
+     * @param value          the value to set
      * @param expirationTime the expiration time in the specified time unit
-     * @param timeUnit the time unit of the expiration time
+     * @param timeUnit       the time unit of the expiration time
      */
     public void set(String key, Object value, long expirationTime, TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(key, value, expirationTime, timeUnit);
@@ -58,8 +57,8 @@ public class RedisUtil {
     /**
      * Sets a value in Redis with a specified expiration time, defaulting to milliseconds.
      *
-     * @param key the key of the value to set
-     * @param value the value to set
+     * @param key            the key of the value to set
+     * @param value          the value to set
      * @param expirationTime the expiration time in milliseconds
      */
     public void set(String key, Object value, long expirationTime) {
@@ -69,7 +68,7 @@ public class RedisUtil {
     /**
      * Increments a value in Redis by a specified amount.
      *
-     * @param key the key of the value to increment
+     * @param key  the key of the value to increment
      * @param step the amount to increment the value by
      */
     public void increment(String key, int step) {
@@ -85,13 +84,19 @@ public class RedisUtil {
         redisTemplate.delete(key);
     }
 
+    public void setUserToken(String cacheName, String token) {
+        this.set(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName
+                , token, CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN);
+    }
+
     /**
      * Deletes a cached captcha registration by email.
      *
      * @param email the email associated with the captcha registration
      */
     @CacheEvict(value = CONSTANT.CACHE_NAME.CAPTCHA_REGISTER, key = "#email")
-    public void delCaptchaRegister(String email) {}
+    public void delCaptchaRegister(String email) {
+    }
 
     /**
      * Deletes a cached user token by email.
@@ -99,7 +104,8 @@ public class RedisUtil {
      * @param email the email associated with the user token
      */
     @CacheEvict(value = CONSTANT.CACHE_NAME.USER_TOKEN, key = "#email")
-    public void delUserToken(String email) {}
+    public void delUserToken(String email) {
+    }
 
     /**
      * Deletes a cached user by email.
@@ -107,5 +113,6 @@ public class RedisUtil {
      * @param email the email associated with the user
      */
     @CacheEvict(value = CONSTANT.CACHE_NAME.USER_CACHE, key = "#email")
-    public void delUserCache(String email) {}
+    public void delUserCache(String email) {
+    }
 }

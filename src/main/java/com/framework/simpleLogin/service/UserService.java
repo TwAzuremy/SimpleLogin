@@ -65,13 +65,7 @@ public class UserService {
             UserResponse response = authenticationService.login(user);
             String token = JwtUtil.generate(response.toMap());
 
-            String cacheName = response.getTABLE() + "*" +  response.getId() + "-" + response.sign();
-
-            redisUtil.set(
-                    CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName,
-                    token,
-                    CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN
-            );
+            redisUtil.setUserToken(response.generateCacheName(), token);
 
             loginAttemptService.reset(username);
             log.info("[Security verification successful] User email: {}", username);

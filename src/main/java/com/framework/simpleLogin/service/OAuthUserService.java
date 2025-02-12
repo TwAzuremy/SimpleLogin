@@ -100,7 +100,12 @@ public class OAuthUserService {
 
             // If there is a bound user, the user's token is used.
             if (user != null) {
-                return JwtUtil.generate(new UserResponse(user).toMap());
+                UserResponse response = new UserResponse(user);
+                String token = JwtUtil.generate(response.toMap());
+
+                redisUtil.setUserToken(response.generateCacheName(), token);
+
+                return token;
             }
 
             // If no user is bound, generate your own token.
@@ -165,11 +170,10 @@ public class OAuthUserService {
 
     private String cacheToken(OAuthUser oAuthUser) {
         OAuthUserResponse response = new OAuthUserResponse(oAuthUser);
-
         String token = JwtUtil.generate(response.toMap());
-        String cacheName = response.getTABLE() + "*" + response.getUuid() + "-" + response.sign();
 
-        redisUtil.set(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + cacheName, token, CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN);
+        redisUtil.set(CONSTANT.CACHE_NAME.USER_TOKEN + ":" + response.generateCacheName()
+                , token, CONSTANT.CACHE_EXPIRATION_TIME.USER_TOKEN);
 
         return token;
     }
