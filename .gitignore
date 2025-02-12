@@ -35,3 +35,4 @@ build/
 
 ### Application ###
 src/**/application-dev.yml
+*.java~
