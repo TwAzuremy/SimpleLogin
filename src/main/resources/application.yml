@@ -55,9 +55,16 @@ spring:
                     github:
                         redirect-uri: http://localhost:13900/oauth/redirect
                         scope: user:email
+                    google:
+                        redirect-uri: http://localhost:13900/oauth/redirect
+                        scope: profile%20email%20openid
                 provider:
                     github:
                         authorization-uri: https://github.com/login/oauth/authorize
                         token-uri: https://github.com/login/oauth/access_token
                         user-info-uri: https://api.github.com/user
                         user-name-attribute: login
+                    google:
+                        authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+                        token-uri: https://oauth2.googleapis.com/token
+                        user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo

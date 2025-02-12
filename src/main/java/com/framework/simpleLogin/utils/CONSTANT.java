@@ -13,6 +13,7 @@ public final class CONSTANT {
         public static final String CAPTCHA = "captcha";
         public static final String USER = "user";
         public static final String API = "api";
+        public static final String OAUTH2 = "oauth2";
 
         public static final String CAPTCHA_REGISTER = CAPTCHA + ":register";
         public static final String CAPTCHA_RESET_PASSWORD = CAPTCHA + ":reset-password";
@@ -23,6 +24,8 @@ public final class CONSTANT {
 
         public static final String API_DEBOUNCE = API + ":debounce";
         public static final String API_SIGNATURE = API + ":signature";
+
+        public static final String OAUTH2_STATE = OAUTH2 + ":state";
     }
 
     @Component
@@ -39,6 +42,7 @@ public final class CONSTANT {
         public static long ACCOUNT_LOCKED;
         public static long CAPTCHA;
         public static long API_SIGNATURE;
+        public static long OAUTH2_STATE;
 
         public CACHE_EXPIRATION_TIME(
                 @Value("${cache.expiration-time.user-cache}") long USER_CACHE,
@@ -46,7 +50,8 @@ public final class CONSTANT {
                 @Value("${cache.expiration-time.api-debounce}") long API_DEBOUNCE,
                 @Value("${cache.expiration-time.account-locked}") long ACCOUNT_LOCKED,
                 @Value("${cache.expiration-time.captcha}") long CAPTCHA,
-                @Value("${cache.expiration-time.api-signature}") long API_SIGNATURE
+                @Value("${cache.expiration-time.api-signature}") long API_SIGNATURE,
+                @Value("${cache.expiration-time.oauth2-state}") long OAUTH2_STATE
         ) {
             CACHE_EXPIRATION_TIME.USER_CACHE = USER_CACHE;
             CACHE_EXPIRATION_TIME.USER_TOKEN = USER_TOKEN;
@@ -54,6 +59,7 @@ public final class CONSTANT {
             CACHE_EXPIRATION_TIME.ACCOUNT_LOCKED = ACCOUNT_LOCKED;
             CACHE_EXPIRATION_TIME.CAPTCHA = CAPTCHA;
             CACHE_EXPIRATION_TIME.API_SIGNATURE = API_SIGNATURE;
+            CACHE_EXPIRATION_TIME.OAUTH2_STATE = OAUTH2_STATE;
         }
 
         public static long get(String key) {

@@ -25,6 +25,19 @@ public class Encryption {
     }
 
     /**
+     * A random n-bit string
+     * @param length string length
+     * @return 16-base string
+     */
+    private static String rand(@SuppressWarnings("SameParameterValue") int length) {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[Math.floorDiv(length, 2)];
+        random.nextBytes(bytes);
+
+        return byteToHex(bytes);
+    }
+
+    /**
      * Normal SHA-256 encryption.
      * @param plaintext Text that needs to be encrypted, such as your password.
      * @return Encrypted text, length: 64
@@ -49,11 +62,15 @@ public class Encryption {
      * @return salt, length: 32
      */
     public static String generateSalt() {
-        SecureRandom rand = new SecureRandom();
-        byte[] salt = new byte[16];
-        rand.nextBytes(salt);
+        return rand(32);
+    }
 
-        return byteToHex(salt);
+    /**
+     * A 32-bit state is generated.
+     * @return state, length: 32
+     */
+    public static String generateState() {
+        return rand(32);
     }
 
     /**
