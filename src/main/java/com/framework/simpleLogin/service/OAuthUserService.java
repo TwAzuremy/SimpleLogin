@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.framework.simpleLogin.dto.OAuthUserResponse;
 import com.framework.simpleLogin.dto.UserResponse;
 import com.framework.simpleLogin.entity.OAuthUser;
+import com.framework.simpleLogin.entity.User;
 import com.framework.simpleLogin.exception.ExpiredCodeOrTokenException;
 import com.framework.simpleLogin.exception.MissingUserException;
 import com.framework.simpleLogin.factory.OAuthUserProviderFactory;
@@ -95,6 +96,14 @@ public class OAuthUserService {
                 oAuthUser.getProvider(), oAuthUser.getProviderId());
 
         if (dbOAuthUser.isPresent()) {
+            User user = dbOAuthUser.get().getUser();
+
+            // If there is a bound user, the user's token is used.
+            if (user != null) {
+                return JwtUtil.generate(new UserResponse(user).toMap());
+            }
+
+            // If no user is bound, generate your own token.
             return cacheToken(dbOAuthUser.get());
         }
 
