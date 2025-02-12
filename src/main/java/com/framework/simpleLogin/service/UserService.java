@@ -39,6 +39,11 @@ public class UserService {
             user.setUsername(user.getEmail());
         }
 
+        // If name is empty, the value of username is followed
+        if (Gadget.StringUtils.isEmpty(user.getName())) {
+            user.setName(user.getUsername());
+        }
+
         String salt = Encryption.generateSalt();
         String ciphertext = Encryption.SHA256(user.getPassword() + salt);
 

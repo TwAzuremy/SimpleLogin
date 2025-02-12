@@ -41,7 +41,7 @@ public class OAuth2ClientValuePostProcessor implements BeanPostProcessor {
 
                 registrationMap.forEach((key, value) -> values.put(key, value.toString()));
                 providerMap.forEach((key, value) -> values.put(key, value.toString()));
-                values.put("id", annotation.key());
+                values.put("provider", annotation.key());
 
                 field.setAccessible(true);
                 field.set(bean, values);
