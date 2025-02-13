@@ -51,6 +51,7 @@ public class UserController {
 
         userService.register(user);
         redisUtil.delCaptchaRegister(user.getEmail());
+        redisUtil.del(CONSTANT.CACHE_NAME.USER_CACHE + ":username:" + user.getUsername());
 
         eventPublisher.publishEvent(new UserRegisteredEvent(this, new UserResponse(user)));
         return new ResponseEntity<>(HttpStatus.CREATED, "User registered successfully.", true);
@@ -82,15 +83,15 @@ public class UserController {
         });
     }
 
-    @PatchMapping("/reset-password")
-    public ResponseEntity<Number> resetPassword(
+    @PatchMapping("/modify-password")
+    public ResponseEntity<Number> modifyPassword(
             @RequestBody UserCaptchaRequest userCaptchaRequest,
             @RequestHeader(value = "Authorization") String token) {
 
         Map<String, Object> claims = JwtUtil.parse(Gadget.requestTokenProcessing(token));
 
         if (!captchaService.verify(
-                CONSTANT.CACHE_NAME.CAPTCHA_RESET_PASSWORD,
+                CONSTANT.CACHE_NAME.CAPTCHA_MODIFY_PASSWORD,
                 userCaptchaRequest.getCaptcha(),
                 (String) claims.get("username")
         )) {
@@ -98,12 +99,29 @@ public class UserController {
         }
 
         if (userCaptchaRequest.getAttachment() instanceof Map<?, ?> attachment) {
-            return new ResponseEntity<>(HttpStatus.OK, userService.resetPassword(
+            return new ResponseEntity<>(HttpStatus.OK, userService.modifyPassword(
                     (long) claims.get("id"),
                     (String) attachment.get("oldPassword"),
                     (String) attachment.get("newPassword")));
         }
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST, -1);
+    }
+
+    @PatchMapping("/reset-password")
+    public ResponseEntity<Integer> resetPassword(@RequestBody UserCaptchaRequest userCaptchaRequest) {
+        User user = userCaptchaRequest.getUser();
+        String captcha = userCaptchaRequest.getCaptcha();
+
+        if (!captchaService.verify(CONSTANT.CACHE_NAME.CAPTCHA_RESET_PASSWORD, captcha, user.getEmail())) {
+            throw new InvalidCaptchaException("Captcha verification failed.");
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK, userService.resetPassword(user.getEmail(), user.getPassword()));
+    }
+
+    @GetMapping("/exists-username")
+    public ResponseEntity<Boolean> existsUsername(@RequestParam String username) {
+        return new ResponseEntity<>(HttpStatus.OK, userService.existsUsername(username));
     }
 }

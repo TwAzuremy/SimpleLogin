@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/users/register",
                                 "/users/login",
+                                "/users/reset-password",
+                                "/users/exists-username",
                                 "/exceptions/**",
                                 "/email/send-register-captcha",
                                 "/oauth/get-redirect-address",

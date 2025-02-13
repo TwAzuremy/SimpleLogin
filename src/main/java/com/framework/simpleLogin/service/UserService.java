@@ -96,7 +96,7 @@ public class UserService {
     }
 
     @Transactional
-    public long resetPassword(long id, String oldPassword, String newPassword) {
+    public int modifyPassword(long id, String oldPassword, String newPassword) {
         User dbUser = userRepository.findUserById(id).orElseThrow(() -> new MissingUserException("User not found"));
         Map<String, String> separate = Gadget.StringUtils.separateCiphertext(dbUser.getPassword());
 
@@ -117,5 +117,17 @@ public class UserService {
         String ciphertext = Encryption.SHA256(newPassword + salt);
 
         return userRepository.updatePasswordById(ciphertext + salt, id);
+    }
+
+    @Transactional
+    public int resetPassword(String email, String newPassword) {
+        String salt = Encryption.generateSalt();
+        String ciphertext = Encryption.SHA256(newPassword + salt);
+
+        return userRepository.updatePasswordByEmail(ciphertext + salt, email);
+    }
+
+    public boolean existsUsername(String username) {
+        return userRepository.existsUsernameByUsername(username);
     }
 }

@@ -28,5 +28,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Transactional
     @Modifying
     @Query("update User u set u.password = :password where u.id = :id")
-    long updatePasswordById(String password, long id);
+    int updatePasswordById(String password, long id);
+
+    @Transactional
+    @Modifying
+    @Query("update User u set u.password = :password where u.email = :email")
+    int updatePasswordByEmail(String password, String email);
+
+    // Query for the existence of the username, and log it to the cache for 1 day.
+    @Cacheable(cacheNames = CONSTANT.CACHE_NAME.USER_CACHE + ":username#86400000" , key = "#username")
+    @Query("select exists (select 1 from User u where u.username = :username)")
+    boolean existsUsernameByUsername(String username);
 }
