@@ -118,10 +118,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<Boolean> handleException(Exception e) {
         log.warn("An error occurred on the server.", e);
 
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST, "An error occurred on the server.", false);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred on the server.", false);
     }
 }
