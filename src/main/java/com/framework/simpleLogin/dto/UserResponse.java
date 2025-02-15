@@ -26,6 +26,7 @@ public class UserResponse {
 
     private Long id;
     private String username;
+    private String name;
     private String email;
     private String profile;
 
@@ -34,6 +35,7 @@ public class UserResponse {
     public UserResponse(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
+        this.name = user.getName();
         this.email = user.getEmail();
         this.profile = user.getProfile();
 
@@ -42,6 +44,10 @@ public class UserResponse {
 
     public UserResponse(OAuthUser oAuthUser) {
         this.username = oAuthUser.getUsername();
+
+        int index = this.username.indexOf("#");
+        this.name = index < 0 ? this.username : this.username.substring(0, index);
+
         this.email = oAuthUser.getEmail();
         this.profile = oAuthUser.getProfile();
     }
@@ -50,6 +56,7 @@ public class UserResponse {
         return User.builder()
                 .id(id)
                 .username(username)
+                .name(name)
                 .email(email)
                 .profile(profile)
                 .build();
